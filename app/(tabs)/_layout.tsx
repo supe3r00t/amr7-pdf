@@ -1,35 +1,27 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import { theme } from '@/constants/theme';
+import { Text } from 'react-native';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+export default function TabsLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
+    <Tabs screenOptions={{
+      headerShown: false,
+      tabBarStyle: {
+        backgroundColor: theme.colors.surface,
+        borderTopColor: theme.colors.border,
+        height: 70,
+        paddingBottom: 12,
+        paddingTop: 6,
+      },
+      tabBarActiveTintColor: theme.colors.primary,
+      tabBarInactiveTintColor: theme.colors.textMuted,
+      tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
+    }}>
+      <Tabs.Screen name="index" options={{ title: 'الرئيسية', tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🏠</Text> }} />
+      <Tabs.Screen name="tools" options={{ title: 'الأدوات', tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📄</Text> }} />
+      <Tabs.Screen name="ai" options={{ title: 'الذكاء الاصطناعي', tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🤖</Text> }} />
+      <Tabs.Screen name="about" options={{ title: 'من نحن', tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>ℹ️</Text> }} />
+      <Tabs.Screen name="contact" options={{ title: 'تواصل', tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📞</Text> }} />
     </Tabs>
   );
 }

@@ -1,25 +1,35 @@
 {
   "expo": {
-    "name": "amr7-pdf",
+    "name": "AMR7 PDF Tools",
     "slug": "amr7-pdf",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "amr7pdf",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "sa.amr7.pdftools",
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": [
+          "https",
+          "http",
+          "https",
+          "http"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "sa.amr7.pdftools",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#236D6F",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "output": "static",
@@ -27,22 +37,28 @@
     },
     "plugins": [
       "expo-router",
+      "expo-document-picker",
       [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#0A142F",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#0A142F"
           }
         }
       ]
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2e0e469e-6a9e-4cd1-a5d5-117af32dcec9"
+      }
     }
   }
 }
