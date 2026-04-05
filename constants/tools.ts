@@ -62,23 +62,23 @@ export const ALL_TOOLS: Tool[] = [
 
   // ─── تصميم وصور ───
   { id: 'color-tools',      name: 'أدوات الألوان',        description: 'تحويل ومقارنة وتوليد الألوان.',               iconSet: 'MaterialCommunityIcons', iconName: 'palette-outline',             category: 'design' },
-  { id: 'image-tools',      name: 'محرر الصور',           description: 'ضغط وتحويل وتعديل الصور.',                   iconSet: 'MaterialCommunityIcons', iconName: 'image-filter-outline',        category: 'design' },
+  { id: 'image-tools',      name: 'محرر الصور',           description: 'ضغط وتحويل وتعديل الصور.',                   iconSet: 'MaterialCommunityIcons', iconName: 'image-multiple-outline',        category: 'design' },
 
   // ─── مطورين ───
 
-  { id: 'sign-pdf',       name: 'توقيع PDF',          description: 'أضف توقيعك الإلكتروني على الملف.',        iconSet: 'MaterialCommunityIcons', iconName: 'draw',                        category: 'pdf' },
+  { id: 'sign-pdf',       name: 'توقيع PDF',          description: 'أضف توقيعك الإلكتروني على الملف.',        iconSet: 'MaterialCommunityIcons', iconName: 'draw-pen',                        category: 'pdf' },
   { id: 'scan-document',  name: 'مسح المستندات',       description: 'امسح المستندات بالكاميرا وحوّلها PDF.',    iconSet: 'MaterialCommunityIcons', iconName: 'camera-outline',              category: 'pdf' },
-  { id: 'fill-pdf-form',  name: 'ملء النماذج',         description: 'املأ نماذج PDF إلكترونياً.',               iconSet: 'MaterialCommunityIcons', iconName: 'file-pen',                    category: 'pdf' },
-  { id: 'edit-pdf-text',  name: 'تحرير نص PDF',        description: 'أضف نصوصاً على ملف PDF.',                  iconSet: 'MaterialCommunityIcons', iconName: 'pen-to-square',               category: 'pdf' },
+  { id: 'fill-pdf-form',  name: 'ملء النماذج',         description: 'املأ نماذج PDF إلكترونياً.',               iconSet: 'MaterialCommunityIcons', iconName: 'file-edit-outline',                    category: 'pdf' },
+  { id: 'edit-pdf-text',  name: 'تحرير نص PDF',        description: 'أضف نصوصاً على ملف PDF.',                  iconSet: 'MaterialCommunityIcons', iconName: 'pencil-box-outline',               category: 'pdf' },
   { id: 'pdf-reader',     name: 'قارئ PDF',            description: 'اعرض ملفات PDF في التطبيق.',               iconSet: 'MaterialCommunityIcons', iconName: 'file-pdf-box',                category: 'pdf' },
   { id: 'pdf-to-pptx',   name: 'PDF إلى PowerPoint',  description: 'حوّل PDF إلى عرض تقديمي.',                 iconSet: 'MaterialCommunityIcons', iconName: 'file-powerpoint-box',         category: 'convert' },
   { id: 'pdf-to-excel',  name: 'PDF إلى Excel',        description: 'حوّل PDF إلى جدول Excel.',                 iconSet: 'MaterialCommunityIcons', iconName: 'file-excel-box',              category: 'convert' },
   { id: 'pdf-a',         name: 'PDF/A أرشفة',          description: 'حوّل PDF لصيغة الأرشفة الدولية.',          iconSet: 'MaterialCommunityIcons', iconName: 'archive-outline',             category: 'convert' },
   { id: 'html-to-pdf',   name: 'HTML إلى PDF',         description: 'حوّل صفحات الويب إلى PDF.',                iconSet: 'MaterialCommunityIcons', iconName: 'web',                         category: 'convert' },
   { id: 'translate-pdf', name: 'ترجمة PDF',            description: 'ترجم محتوى PDF بالذكاء الاصطناعي.',        iconSet: 'MaterialCommunityIcons', iconName: 'translate',                   category: 'ai' },
-  { id: 'compare-pdf',   name: 'مقارنة مستندين',       description: 'قارن بين ملفين PDF واكتشف الفروقات.',      iconSet: 'MaterialCommunityIcons', iconName: 'compare',                     category: 'ai' },
-  { id: 'redact-pdf',    name: 'حجب المعلومات',        description: 'احجب النصوص الحساسة من PDF.',               iconSet: 'MaterialCommunityIcons', iconName: 'eraser',                      category: 'pdf' },
-  { id: 'zakat',         name: 'حاسبة الزكاة',         description: 'احسب زكاة مالك بسهولة.',                   iconSet: 'MaterialCommunityIcons', iconName: 'star-crescent',               category: 'business' },
+  { id: 'compare-pdf',   name: 'مقارنة مستندين',       description: 'قارن بين ملفين PDF واكتشف الفروقات.',      iconSet: 'MaterialCommunityIcons', iconName: 'compare-horizontal',                     category: 'ai' },
+  { id: 'redact-pdf',    name: 'حجب المعلومات',        description: 'احجب النصوص الحساسة من PDF.',               iconSet: 'MaterialCommunityIcons', iconName: 'eraser-variant',                      category: 'pdf' },
+  { id: 'zakat',         name: 'حاسبة الزكاة',         description: 'احسب زكاة مالك بسهولة.',                   iconSet: 'MaterialCommunityIcons', iconName: 'calendar-star',               category: 'business' },
   { id: 'support',       name: 'الدعم الفني',          description: 'أرسل بلاغ دعم فني مع صورة.',               iconSet: 'MaterialCommunityIcons', iconName: 'headset',                     category: 'business' },
   { id: 'dev-tools',        name: 'أدوات المطورين',       description: 'Base64، JSON، UUID وأكثر.',                  iconSet: 'MaterialCommunityIcons', iconName: 'code-braces',                 category: 'dev' },
 ];
