@@ -1,427 +1,447 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, TextInput } from 'react-native';
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+  TextInput,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
-import { theme } from '@/constants/theme';
-import { ALL_TOOLS } from '@/constants/tools';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
-import { useState } from 'react';
 import * as FileSystem from 'expo-file-system/legacy';
+import { theme } from '@/constants/theme';
+import { getToolById } from '@/constants/tools';
+import { ToolIcon } from '@/components/tool-icon';
 
 const API_BASE = 'https://pdf.amr7.io/api';
 
 const API_MAP: Record<string, string> = {
-  'merge': 'merge-pdf',
-  'split': 'split-pdf',
-  'compress': 'compress-pdf',
-  'rotate': 'rotate-pdf',
-  'extract-pages': 'extract-pages',
-  'delete-pages': 'delete-pages',
-  'crop': 'crop-pdf',
-  'resize': 'resize-pdf',
+  // PDF
+  merge:              'merge-pdf',
+  split:              'split-pdf',
+  compress:           'compress-pdf',
+  rotate:             'rotate-pdf',
+  'extract-pages':    'extract-pages',
+  'delete-pages':     'delete-pages',
+  organize:           'organize-pdf',
+  crop:               'crop-pdf',
+  resize:             'resize-pdf',
   'add-page-numbers': 'add-page-numbers',
-  'header-footer': 'header-footer-pdf',
-  'watermark': 'watermark-pdf',
-  'protect': 'protect-pdf',
-  'unlock': 'unlock-pdf',
-  'edit-metadata': 'edit-pdf-metadata',
-  'flatten': 'flatten-pdf',
-  'repair': 'repair-pdf',
-  'grayscale': 'grayscale-pdf',
-  'extract-images': 'extract-images',
-  'ocr': 'ocr-pdf',
-  'pdf-to-jpg': 'pdf-to-jpg',
-  'word-to-pdf': 'word-to-pdf',
-  'excel-to-pdf': 'excel-to-pdf',
-  'ai-chat': 'ai/chat-pdf',
-  'ai-summarize': 'ai/summarize',
-  'ai-tables': 'ai/extract-tables',
-  'prompt-gen': 'ai/prompt-generator',
-  'prompt-check': 'ai/prompt-checker',
-  'ai-detector': 'ai/detector',
-  'humanizer': 'ai/humanizer',
+  'header-footer':    'header-footer-pdf',
+  watermark:          'watermark-pdf',
+  protect:            'protect-pdf',
+  unlock:             'unlock-pdf',
+  'edit-metadata':    'edit-pdf-metadata',
+  flatten:            'flatten-pdf',
+  repair:             'repair-pdf',
+  grayscale:          'grayscale-pdf',
+  'extract-images':   'extract-images',
+  ocr:                'ocr-pdf',
+  // تحويل
+  'pdf-to-jpg':       'pdf-to-jpg',
+  'jpg-to-pdf':       'jpg-to-pdf',
+  'word-to-pdf':      'word-to-pdf',
+  'excel-to-pdf':     'excel-to-pdf',
+  // AI
+  'ai-chat':          'ai/chat-pdf',
+  'ai-summarize':     'ai/summarize',
+  'ai-tables':        'ai/extract-tables',
+  'ai-image-gen':     'ai/image-gen',
+  'prompt-gen':       'ai/prompt-generator',
+  'prompt-check':     'ai/prompt-checker',
+  'ai-detector':      'ai/detector',
+  humanizer:          'ai/humanizer',
+  // أعمال
+  'qr-code':          'tools/qr-code',
+  barcode:            'tools/barcode',
+  invoice:            'tools/invoice',
+  'whatsapp-link':    'tools/whatsapp-link',
+  'email-signature':  'tools/email-signature',
+  // نصوص
+  'text-tools':       'tools/text-tools',
+  calculators:        'tools/calculators',
+  // تصميم
+  'color-tools':      'tools/color-tools',
+  'image-tools':      'tools/image-tools',
+  // مطورين
+  'dev-tools':        'tools/dev-tools',
 };
 
-const MULTI_FILE_TOOLS = ['merge'];
-const TEXT_RESULT_TOOLS = ['ocr', 'ai-chat', 'ai-summarize', 'ai-tables', 'prompt-gen', 'prompt-check', 'ai-detector', 'humanizer'];
-const WORD_TOOLS = ['word-to-pdf'];
-const EXCEL_TOOLS = ['excel-to-pdf'];
+const MULTI_FILE_TOOLS   = ['merge', 'jpg-to-pdf'];
+const TEXT_RESULT_TOOLS  = ['ocr', 'ai-chat', 'ai-summarize', 'ai-tables', 'prompt-gen', 'prompt-check', 'ai-detector', 'humanizer', 'text-tools', 'calculators', 'color-tools', 'dev-tools', 'whatsapp-link', 'email-signature', 'qr-code', 'barcode', 'invoice'];
+const WORD_TOOLS         = ['word-to-pdf'];
+const EXCEL_TOOLS        = ['excel-to-pdf'];
+const IMAGE_RESULT_TOOLS = ['ai-image-gen', 'image-tools'];
+const NO_FILE_TOOLS      = ['prompt-gen', 'prompt-check', 'humanizer', 'ai-detector', 'qr-code', 'barcode', 'invoice', 'whatsapp-link', 'email-signature', 'text-tools', 'calculators', 'color-tools', 'dev-tools'];
 
 type ToolOptions = Record<string, string>;
 
-const TOOL_OPTIONS: Record<string, { label: string; key: string; placeholder: string; type?: string; options?: string[] }[]> = {
-  'rotate': [{ label: 'زاوية الدوران', key: 'angle', placeholder: '90', options: ['90', '180', '270'] }],
-  'split': [{ label: 'أرقام الصفحات (مثال: 1,3,5)', key: 'pages', placeholder: '1,2,3' }],
-  'extract-pages': [{ label: 'أرقام الصفحات (مثال: 1-3)', key: 'pages', placeholder: '1-3' }],
-  'delete-pages': [{ label: 'أرقام الصفحات للحذف', key: 'pages', placeholder: '2,4' }],
-  'watermark': [
-    { label: 'نص العلامة المائية', key: 'text', placeholder: 'سري - AMR7' },
-    { label: 'الشفافية (0-1)', key: 'opacity', placeholder: '0.3' },
+const TOOL_OPTIONS: Record<string, { label: string; key: string; placeholder: string; multiline?: boolean }[]> = {
+  split:             [{ label: 'أرقام الصفحات', key: 'pages', placeholder: '1,3,5' }],
+  'extract-pages':   [{ label: 'الصفحات المطلوبة', key: 'pages', placeholder: '1-3' }],
+  'delete-pages':    [{ label: 'الصفحات للحذف', key: 'pages', placeholder: '2,4' }],
+  protect:           [{ label: 'كلمة المرور', key: 'password', placeholder: 'أدخل كلمة المرور' }],
+  unlock:            [{ label: 'كلمة المرور الحالية', key: 'password', placeholder: 'أدخل كلمة المرور' }],
+  watermark:         [{ label: 'نص العلامة المائية', key: 'text', placeholder: 'سري | نسخة تجريبية' }],
+  'edit-metadata':   [
+    { label: 'عنوان الملف', key: 'title', placeholder: 'اسم المستند' },
+    { label: 'اسم المؤلف', key: 'author', placeholder: 'الاسم' },
   ],
-  'protect': [
-    { label: 'كلمة المرور', key: 'password', placeholder: 'أدخل كلمة المرور', type: 'password' },
+  'ai-chat':         [{ label: 'السؤال', key: 'question', placeholder: 'ما محتوى هذا الملف؟', multiline: true }],
+  'prompt-gen':      [{ label: 'الفكرة', key: 'idea', placeholder: 'اكتب المطلوب توليده...', multiline: true }],
+  'prompt-check':    [{ label: 'البرومبت', key: 'prompt', placeholder: 'ألصق البرومبت هنا...', multiline: true }],
+  humanizer:         [{ label: 'النص', key: 'text', placeholder: 'ألصق النص هنا...', multiline: true }],
+  'ai-detector':     [{ label: 'النص', key: 'text', placeholder: 'ألصق النص هنا...', multiline: true }],
+  'ai-image-gen':    [{ label: 'وصف الصورة', key: 'prompt', placeholder: 'صف الصورة التي تريد توليدها...', multiline: true }],
+  'qr-code':         [{ label: 'الرابط أو النص', key: 'text', placeholder: 'https://amr-7.sa' }],
+  barcode:           [{ label: 'النص أو الرقم', key: 'text', placeholder: '12345678' }],
+  'whatsapp-link':   [
+    { label: 'رقم الهاتف (مع رمز الدولة)', key: 'phone', placeholder: '966505336956' },
+    { label: 'الرسالة الافتراضية', key: 'message', placeholder: 'مرحبًا، أريد الاستفسار...', multiline: true },
   ],
-  'unlock': [
-    { label: 'كلمة المرور الحالية', key: 'password', placeholder: 'أدخل كلمة المرور', type: 'password' },
+  'text-tools':      [{ label: 'النص المطلوب معالجته', key: 'text', placeholder: 'ألصق النص هنا...', multiline: true }],
+  calculators:       [{ label: 'المدخلات', key: 'input', placeholder: 'أدخل القيم المطلوبة...', multiline: true }],
+  'color-tools':     [{ label: 'كود اللون (HEX أو RGB)', key: 'color', placeholder: '#236D6F' }],
+  'dev-tools':       [{ label: 'المدخل', key: 'input', placeholder: 'أدخل النص أو البيانات...', multiline: true }],
+  invoice:           [
+    { label: 'اسم العميل', key: 'client', placeholder: 'اسم الشركة أو الشخص' },
+    { label: 'تفاصيل الخدمة', key: 'details', placeholder: 'الخدمة: ...\nالمبلغ: ...', multiline: true },
   ],
-  'crop': [
-    { label: 'يسار (px)', key: 'left', placeholder: '0' },
-    { label: 'أعلى (px)', key: 'top', placeholder: '0' },
-    { label: 'يمين (px)', key: 'right', placeholder: '50' },
-    { label: 'أسفل (px)', key: 'bottom', placeholder: '50' },
+  'email-signature': [
+    { label: 'الاسم الكامل', key: 'name', placeholder: 'أحمد محمد' },
+    { label: 'المسمى الوظيفي', key: 'title', placeholder: 'مستشار أعمال' },
+    { label: 'البريد الإلكتروني', key: 'email', placeholder: 'info@amr-7.sa' },
+    { label: 'رقم الهاتف', key: 'phone', placeholder: '0505336956' },
   ],
-  'resize': [
-    { label: 'العرض (pt)', key: 'width', placeholder: '595' },
-    { label: 'الارتفاع (pt)', key: 'height', placeholder: '842' },
-  ],
-  'add-page-numbers': [
-    { label: 'الموضع', key: 'position', placeholder: 'bottom-center', options: ['bottom-center', 'bottom-right', 'bottom-left', 'top-center'] },
-    { label: 'حجم الخط', key: 'fontSize', placeholder: '12' },
-  ],
-  'header-footer': [
-    { label: 'نص الرأس', key: 'header', placeholder: 'AMR7 - سري' },
-    { label: 'نص التذييل', key: 'footer', placeholder: 'صفحة {page}' },
-  ],
-  'edit-metadata': [
-    { label: 'عنوان المستند', key: 'title', placeholder: 'عنوان الملف' },
-    { label: 'المؤلف', key: 'author', placeholder: 'اسم المؤلف' },
-  ],
-  'compress': [
-    { label: 'جودة الضغط', key: 'quality', placeholder: 'medium', options: ['low', 'medium', 'high'] },
-  ],
-  'ai-chat': [{ label: 'سؤالك عن الملف', key: 'question', placeholder: 'ما هو موضوع هذا المستند؟' }],
-  'prompt-gen': [{ label: 'وصف ما تريد', key: 'idea', placeholder: 'أريد كتابة قصيدة عن...' }],
-  'prompt-check': [{ label: 'البرومبت للفحص', key: 'prompt', placeholder: 'أدخل البرومبت هنا...' }],
-  'humanizer': [{ label: 'النص المراد أنسنته', key: 'text', placeholder: 'أدخل النص هنا...' }],
-  'ai-detector': [{ label: 'النص للفحص', key: 'text', placeholder: 'أدخل النص هنا...' }],
 };
 
 export default function ToolScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const tool = ALL_TOOLS.find(t => t.id === id);
+  const tool = getToolById(id);
   const [files, setFiles] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
   const [resultUri, setResultUri] = useState<string | null>(null);
   const [textResult, setTextResult] = useState<string | null>(null);
   const [options, setOptions] = useState<ToolOptions>({});
-  const [selectedOption, setSelectedOption] = useState<Record<string, string>>({});
 
-  if (!tool) return (
-    <View style={styles.center}>
-      <Text style={styles.errorText}>الأداة غير موجودة</Text>
-      <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-        <Text style={styles.backBtnText}>رجوع</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  if (!tool) {
+    return (
+      <View style={styles.center}>
+        <Ionicons name="alert-circle-outline" size={48} color={theme.colors.textMuted} />
+        <Text style={styles.notFoundText}>الأداة غير موجودة</Text>
+        <TouchableOpacity style={styles.backLink} onPress={() => router.back()}>
+          <Text style={styles.backLinkText}>العودة</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
-  const isMulti = MULTI_FILE_TOOLS.includes(id as string);
-  const isText = TEXT_RESULT_TOOLS.includes(id as string);
-  const toolOptions = TOOL_OPTIONS[id as string] || [];
-  const isTextOnlyTool = ['prompt-gen', 'prompt-check', 'humanizer', 'ai-detector'].includes(id as string);
+  const isNoFile     = NO_FILE_TOOLS.includes(id ?? '');
+  const isMulti      = MULTI_FILE_TOOLS.includes(id ?? '');
+  const isTextResult = TEXT_RESULT_TOOLS.includes(id ?? '');
+  const isImgResult  = IMAGE_RESULT_TOOLS.includes(id ?? '');
+  const toolOpts     = TOOL_OPTIONS[id ?? ''] ?? [];
 
-  const getFileType = () => {
-    if (WORD_TOOLS.includes(id as string)) return 'application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    if (EXCEL_TOOLS.includes(id as string)) return 'application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    return 'application/pdf';
-  };
-
-  const pickFiles = async () => {
+  const pickFile = async () => {
     try {
+      let mimeTypes: string[] = ['application/pdf'];
+      if (WORD_TOOLS.includes(id ?? ''))
+        mimeTypes = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
+      else if (EXCEL_TOOLS.includes(id ?? ''))
+        mimeTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+      else if (id === 'jpg-to-pdf' || id === 'image-tools')
+        mimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
       const result = await DocumentPicker.getDocumentAsync({
-        type: getFileType(),
+        type: mimeTypes,
         multiple: isMulti,
         copyToCacheDirectory: true,
       });
-      if (!result.canceled) {
-        setFiles(result.assets);
-        setDone(false);
-        setResultUri(null);
-        setTextResult(null);
-      }
-    } catch (e) {
-      Alert.alert('خطأ', 'تعذر اختيار الملف');
+
+      if (result.canceled) return;
+      setFiles(isMulti ? result.assets : [result.assets[0]]);
+      setDone(false);
+      setResultUri(null);
+      setTextResult(null);
+    } catch {
+      Alert.alert('خطأ', 'لم نتمكن من فتح الملف');
     }
   };
 
-  const processFile = async () => {
-    if (!isTextOnlyTool && files.length === 0) return Alert.alert('تنبيه', 'اختر ملفاً أولاً');
+  const execute = async () => {
+    if (!isNoFile && files.length === 0) {
+      Alert.alert('تنبيه', 'اختر ملفًا أولًا');
+      return;
+    }
     setLoading(true);
-    setProgress(20);
-    setDone(false);
-
     try {
-      const apiRoute = API_MAP[id as string] || id;
+      const endpoint = `${API_BASE}/${API_MAP[id ?? '']}`;
       const formData = new FormData();
 
-      if (!isTextOnlyTool) {
-        if (isMulti) {
-          files.forEach(file => {
-            formData.append('files', { uri: file.uri, name: file.name, type: file.mimeType || 'application/pdf' } as any);
-          });
-        } else {
-          formData.append('file', { uri: files[0].uri, name: files[0].name, type: files[0].mimeType || 'application/pdf' } as any);
-        }
+      if (!isNoFile) {
+        files.forEach((f) => {
+          formData.append(isMulti ? 'files' : 'file', {
+            uri: f.uri,
+            name: f.name,
+            type: f.mimeType ?? 'application/pdf',
+          } as any);
+        });
       }
 
-      // إضافة الخيارات
-      Object.entries(options).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
-      });
-      Object.entries(selectedOption).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
-      });
+      Object.entries(options).forEach(([k, v]) => { if (v) formData.append(k, v); });
 
-      setProgress(40);
-
-      const isJsonTool = isTextOnlyTool;
-      const response = await fetch(`${API_BASE}/${apiRoute}`, {
-        method: "POST",
-        headers: isJsonTool ? { "Content-Type": "application/json" } : {},
-        body: isJsonTool ? JSON.stringify(options) : formData,
-      });
-
-      setProgress(70);
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: `خطأ ${response.status}` }));
-        throw new Error(err.error || `خطأ ${response.status}`);
+      const res = await fetch(endpoint, { method: 'POST', body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error ?? `خطأ ${res.status}`);
       }
 
-      if (isText) {
-        const json = await response.json();
-        setTextResult(json.text || json.result || json.humanized || json.output || JSON.stringify(json, null, 2));
-        setProgress(100);
-        setLoading(false);
+      if (isTextResult) {
+        const data = await res.json();
+        setTextResult(data?.result ?? data?.text ?? data?.url ?? JSON.stringify(data, null, 2));
         setDone(true);
+      } else {
+        const blob = await res.blob();
+        const ext = isImgResult || id === 'pdf-to-jpg' ? 'jpg' : 'pdf';
+        const localUri = `${FileSystem.cacheDirectory}result_${Date.now()}.${ext}`;
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64 = (reader.result as string).split(',')[1];
+          await FileSystem.writeAsStringAsync(localUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+          setResultUri(localUri);
+          setDone(true);
+        };
+        reader.readAsDataURL(blob);
         return;
       }
-
-      const ext = id === 'pdf-to-jpg' ? 'jpg' : 'pdf';
-      const fileName = `amr7_${id}_${Date.now()}.${ext}`;
-      const fileUri = FileSystem.cacheDirectory + fileName;
-
-      const base64 = await response.blob().then(blob => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      }));
-
-      setProgress(85);
-      await FileSystem.writeAsStringAsync(fileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
-      setResultUri(fileUri);
-      setProgress(100);
-      setLoading(false);
-      setDone(true);
-
     } catch (e: any) {
+      Alert.alert('خطأ', e.message ?? 'حدث خطأ غير متوقع');
+    } finally {
       setLoading(false);
-      setProgress(0);
-      Alert.alert('خطأ في المعالجة', e.message || 'حاول مرة أخرى');
     }
   };
 
-  const shareFile = async () => {
+  const share = async () => {
     if (!resultUri) return;
-    const canShare = await Sharing.isAvailableAsync();
-    if (canShare) await Sharing.shareAsync(resultUri);
-  };
-
-  const reset = () => {
-    setFiles([]);
-    setDone(false);
-    setResultUri(null);
-    setTextResult(null);
-    setProgress(0);
-    setOptions({});
-    setSelectedOption({});
+    const available = await Sharing.isAvailableAsync();
+    if (available) {
+      const mimeType = resultUri.endsWith('.jpg') ? 'image/jpeg' : 'application/pdf';
+      await Sharing.shareAsync(resultUri, { mimeType, dialogTitle: 'مشاركة الملف' });
+    } else {
+      Alert.alert('تنبيه', 'المشاركة غير متاحة على هذا الجهاز');
+    }
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backIcon}>
-          <Text style={styles.backIconText}>→</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-forward" size={22} color={theme.colors.text} />
         </TouchableOpacity>
-        <Text style={styles.toolIcon}>{tool.icon}</Text>
-        <Text style={styles.toolName}>{tool.name}</Text>
+        <View style={styles.headerMain}>
+          <View style={styles.toolIconBox}>
+            <ToolIcon tool={tool} size={28} />
+          </View>
+          <View style={styles.headerText}>
+            <Text style={styles.toolName}>{tool.name}</Text>
+            <Text style={styles.toolDesc}>{tool.description}</Text>
+          </View>
+        </View>
       </View>
 
-      {/* Upload */}
-      {!isTextOnlyTool && (
-        <TouchableOpacity style={styles.uploadArea} onPress={pickFiles} activeOpacity={0.7}>
-          {files.length === 0 ? (
-            <>
-              <Text style={styles.uploadIcon}>📂</Text>
-              <Text style={styles.uploadTitle}>
-                {WORD_TOOLS.includes(id as string) ? 'اختر ملف Word' :
-                 EXCEL_TOOLS.includes(id as string) ? 'اختر ملف Excel' :
-                 'اختر ملف PDF'}
-              </Text>
-              <Text style={styles.uploadSub}>{isMulti ? 'يمكنك اختيار أكثر من ملف' : 'اضغط لاختيار الملف'}</Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.uploadIcon}>✅</Text>
-              <Text style={styles.uploadTitle}>{files.length > 1 ? `${files.length} ملفات` : files[0].name}</Text>
-              <Text style={styles.uploadSub}>اضغط لتغيير الملف</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      )}
-
-      {/* Files List */}
-      {files.length > 1 && (
-        <View style={styles.filesList}>
-          {files.map((f, i) => (
-            <View key={i} style={styles.fileRow}>
-              <Text style={styles.fileSize}>{((f.size || 0) / 1024).toFixed(0)} KB</Text>
-              <Text style={styles.fileName} numberOfLines={1}>{f.name}</Text>
-              <View style={styles.fileNumBadge}><Text style={styles.fileNum}>{i + 1}</Text></View>
-            </View>
-          ))}
+      {/* File Picker */}
+      {!isNoFile && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>{isMulti ? 'اختر الملفات' : 'اختر الملف'}</Text>
+          <TouchableOpacity style={styles.pickBtn} onPress={pickFile} activeOpacity={0.8}>
+            <Ionicons name="document-attach-outline" size={22} color={theme.colors.primary} />
+            <Text style={styles.pickBtnText}>
+              {files.length > 0
+                ? files.length === 1 ? files[0].name : `${files.length} ملفات محددة`
+                : 'اضغط لاختيار الملف'}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
-      {/* Tool Options */}
-      {toolOptions.length > 0 && (
-        <View style={styles.optionsBox}>
-          <Text style={styles.optionsTitle}>خيارات الأداة</Text>
-          {toolOptions.map(opt => (
-            <View key={opt.key} style={styles.optionItem}>
+      {/* Options */}
+      {toolOpts.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>الخيارات</Text>
+          {toolOpts.map((opt) => (
+            <View key={opt.key} style={styles.optionWrap}>
               <Text style={styles.optionLabel}>{opt.label}</Text>
-              {opt.options ? (
-                <View style={styles.optionButtons}>
-                  {opt.options.map(o => (
-                    <TouchableOpacity
-                      key={o}
-                      style={[styles.optionBtn, (selectedOption[opt.key] || opt.options![0]) === o && styles.optionBtnActive]}
-                      onPress={() => setSelectedOption(prev => ({ ...prev, [opt.key]: o }))}
-                    >
-                      <Text style={[(selectedOption[opt.key] || opt.options![0]) === o ? styles.optionBtnTextActive : styles.optionBtnText]}>{o}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ) : (
-                <TextInput
-                  style={styles.optionInput}
-                  placeholder={opt.placeholder}
-                  placeholderTextColor={theme.colors.textMuted}
-                  value={options[opt.key] || ''}
-                  onChangeText={v => setOptions(prev => ({ ...prev, [opt.key]: v }))}
-                  secureTextEntry={opt.type === 'password'}
-                  textAlign="right"
-                  multiline={['text', 'prompt', 'description', 'question'].includes(opt.key)}
-                  numberOfLines={['text', 'prompt', 'description', 'question'].includes(opt.key) ? 4 : 1}
-                />
-              )}
+              <TextInput
+                style={[styles.input, opt.multiline && styles.textarea]}
+                placeholder={opt.placeholder}
+                placeholderTextColor={theme.colors.textMuted}
+                value={options[opt.key] ?? ''}
+                onChangeText={(v) => setOptions((prev) => ({ ...prev, [opt.key]: v }))}
+                multiline={opt.multiline}
+                numberOfLines={opt.multiline ? 4 : 1}
+                textAlignVertical={opt.multiline ? 'top' : 'center'}
+                textAlign="right"
+              />
             </View>
           ))}
         </View>
       )}
 
-      {/* Progress */}
-      {loading && (
-        <View style={styles.progressBox}>
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progress}%` as any }]} />
-          </View>
-          <Text style={styles.progressText}>جاري المعالجة... {progress}%</Text>
-          <ActivityIndicator color={theme.colors.primary} style={{ marginTop: 8 }} />
-        </View>
-      )}
-
-      {/* Process Button */}
-      {!done && !loading && (
-        <TouchableOpacity
-          style={[styles.processBtn, (!isTextOnlyTool && files.length === 0) && styles.processBtnDisabled]}
-          onPress={processFile}
-          disabled={!isTextOnlyTool && files.length === 0}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.processBtnText}>تطبيق {tool.name} ←</Text>
-        </TouchableOpacity>
-      )}
+      {/* Execute */}
+      <TouchableOpacity
+        style={[styles.execBtn, loading && styles.execBtnDisabled]}
+        onPress={execute}
+        activeOpacity={0.82}
+        disabled={loading}
+      >
+        {loading ? (
+          <><ActivityIndicator color="#fff" size="small" /><Text style={styles.execBtnText}>جاري التنفيذ...</Text></>
+        ) : (
+          <><Ionicons name="flash-outline" size={20} color="#fff" /><Text style={styles.execBtnText}>تنفيذ الأداة</Text></>
+        )}
+      </TouchableOpacity>
 
       {/* Text Result */}
-      {done && textResult && (
-        <View style={styles.resultBox}>
-          <Text style={styles.resultIcon}>✅</Text>
-          <Text style={styles.resultTitle}>تمت المعالجة!</Text>
+      {textResult && (
+        <View style={styles.resultSection}>
+          <Text style={styles.resultLabel}>النتيجة</Text>
           <ScrollView style={styles.textResultBox} nestedScrollEnabled>
-            <Text style={styles.textResultContent} selectable>{textResult}</Text>
+            <Text style={styles.textResultContent}>{textResult}</Text>
           </ScrollView>
-          <TouchableOpacity style={styles.newBtn} onPress={reset}>
-            <Text style={styles.newBtnText}>معالجة جديدة</Text>
-          </TouchableOpacity>
         </View>
       )}
 
       {/* File Result */}
       {done && resultUri && (
-        <View style={styles.resultBox}>
-          <Text style={styles.resultIcon}>🎉</Text>
-          <Text style={styles.resultTitle}>تمت المعالجة بنجاح!</Text>
-          <TouchableOpacity style={styles.downloadBtn} onPress={shareFile}>
-            <Text style={styles.downloadBtnText}>⬇ تحميل / مشاركة الملف</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.newBtn} onPress={reset}>
-            <Text style={styles.newBtnText}>معالجة ملف جديد</Text>
+        <View style={styles.resultSection}>
+          <View style={styles.successBadge}>
+            <Ionicons name="checkmark-circle" size={22} color={theme.colors.success} />
+            <Text style={styles.successText}>تم تنفيذ الأداة بنجاح</Text>
+          </View>
+          <TouchableOpacity style={styles.shareBtn} onPress={share} activeOpacity={0.82}>
+            <Ionicons name="share-outline" size={20} color="#fff" />
+            <Text style={styles.shareBtnText}>مشاركة / تنزيل الملف</Text>
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Support */}
+      <TouchableOpacity
+        style={styles.supportLink}
+        onPress={() => router.push({ pathname: '/support', params: { tool: tool.name } })}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="help-circle-outline" size={16} color={theme.colors.textMuted} />
+        <Text style={styles.supportLinkText}>مشكلة في هذه الأداة؟ تواصل مع الدعم</Text>
+      </TouchableOpacity>
+
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.background },
-  errorText: { fontSize: 16, color: theme.colors.text, marginBottom: 16 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingTop: 65, paddingBottom: 16, paddingHorizontal: 16, backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border, gap: 10 },
-  backIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: theme.colors.background, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.border },
-  backIconText: { fontSize: 18, color: theme.colors.primary },
-  toolIcon: { fontSize: 26 },
-  toolName: { fontSize: 20, fontWeight: '900', color: theme.colors.text, flex: 1 },
-  uploadArea: { margin: 16, borderRadius: theme.radius.xl, borderWidth: 2, borderColor: theme.colors.primary + '50', borderStyle: 'dashed', backgroundColor: theme.colors.primaryLight, padding: 36, alignItems: 'center' },
-  uploadIcon: { fontSize: 44, marginBottom: 10 },
-  uploadTitle: { fontSize: 16, fontWeight: '800', color: theme.colors.text, marginBottom: 6, textAlign: 'center' },
-  uploadSub: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'center' },
-  filesList: { marginHorizontal: 16, marginBottom: 12, backgroundColor: theme.colors.surface, borderRadius: theme.radius.lg, borderWidth: 1, borderColor: theme.colors.border, overflow: 'hidden' },
-  fileRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border, gap: 10 },
-  fileNumBadge: { width: 26, height: 26, borderRadius: 13, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center' },
-  fileNum: { color: '#fff', fontSize: 12, fontWeight: '800' },
-  fileName: { flex: 1, fontSize: 13, color: theme.colors.text, fontWeight: '600', textAlign: 'right' },
-  fileSize: { fontSize: 11, color: theme.colors.textMuted },
-  optionsBox: { marginHorizontal: 16, marginBottom: 8, backgroundColor: theme.colors.surface, borderRadius: theme.radius.lg, padding: 16, borderWidth: 1, borderColor: theme.colors.border },
-  optionsTitle: { fontSize: 15, fontWeight: '800', color: theme.colors.text, textAlign: 'right', marginBottom: 14 },
-  optionItem: { marginBottom: 14 },
-  optionLabel: { fontSize: 13, fontWeight: '700', color: theme.colors.textMuted, textAlign: 'right', marginBottom: 8 },
-  optionButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'flex-end' },
-  optionBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 50, borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.background },
-  optionBtnActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
-  optionBtnText: { fontSize: 13, color: theme.colors.textMuted, fontWeight: '600' },
-  optionBtnTextActive: { fontSize: 13, color: '#fff', fontWeight: '700' },
-  optionInput: { backgroundColor: theme.colors.background, borderRadius: theme.radius.md, borderWidth: 1, borderColor: theme.colors.border, padding: 12, fontSize: 14, color: theme.colors.text, textAlignVertical: 'top' },
-  progressBox: { margin: 16, padding: 20, backgroundColor: theme.colors.surface, borderRadius: theme.radius.lg, borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center' },
-  progressBar: { width: '100%', height: 8, backgroundColor: theme.colors.border, borderRadius: 4, overflow: 'hidden', marginBottom: 10 },
-  progressFill: { height: 8, backgroundColor: theme.colors.primary, borderRadius: 4 },
-  progressText: { fontSize: 13, color: theme.colors.textMuted, fontWeight: '600' },
-  processBtn: { margin: 16, backgroundColor: theme.colors.primary, borderRadius: theme.radius.lg, padding: 18, alignItems: 'center', shadowColor: theme.colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
-  processBtnDisabled: { opacity: 0.4 },
-  processBtnText: { color: '#fff', fontSize: 16, fontWeight: '900' },
-  resultBox: { margin: 16, padding: 24, backgroundColor: theme.colors.surface, borderRadius: theme.radius.xl, borderWidth: 1, borderColor: theme.colors.primary + '30', alignItems: 'center' },
-  resultIcon: { fontSize: 48, marginBottom: 10 },
-  resultTitle: { fontSize: 18, fontWeight: '900', color: theme.colors.text, marginBottom: 20 },
-  textResultBox: { width: '100%', backgroundColor: theme.colors.background, borderRadius: theme.radius.md, padding: 14, marginBottom: 16, maxHeight: 300 },
-  textResultContent: { fontSize: 13, color: theme.colors.text, lineHeight: 22, textAlign: 'right' },
-  downloadBtn: { width: '100%', backgroundColor: theme.colors.primary, borderRadius: theme.radius.lg, padding: 16, alignItems: 'center', marginBottom: 10 },
-  downloadBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  newBtn: { width: '100%', backgroundColor: theme.colors.background, borderRadius: theme.radius.lg, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border },
-  newBtnText: { color: theme.colors.text, fontSize: 14, fontWeight: '700' },
-  backBtn: { backgroundColor: theme.colors.primary, padding: 12, borderRadius: theme.radius.lg, marginTop: 12 },
-  backBtnText: { color: '#fff', fontWeight: '800' },
+  content: { paddingBottom: 60 },
+
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: theme.colors.background },
+  notFoundText: { fontSize: 16, color: theme.colors.textMuted, fontFamily: theme.fonts.bold },
+  backLink: { marginTop: 4 },
+  backLinkText: { fontSize: 14, color: theme.colors.primary, fontFamily: theme.fonts.bold },
+
+  header: {
+    backgroundColor: theme.colors.surface,
+    paddingTop: 56,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    gap: 14,
+  },
+  backBtn: {
+    width: 40, height: 40,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.background,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: theme.colors.border,
+    alignSelf: 'flex-end',
+  },
+  headerMain: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  toolIconBox: {
+    width: 58, height: 58,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.primarySoft,
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  headerText: { flex: 1, alignItems: 'flex-end' },
+  toolName: { fontSize: 20, color: theme.colors.text, fontFamily: theme.fonts.black, textAlign: 'right' },
+  toolDesc: { fontSize: 13, color: theme.colors.textMuted, fontFamily: theme.fonts.regular, textAlign: 'right', marginTop: 4 },
+
+  section: { marginHorizontal: 16, marginTop: 20 },
+  sectionLabel: { fontSize: 14, color: theme.colors.text, fontFamily: theme.fonts.bold, textAlign: 'right', marginBottom: 10 },
+
+  pickBtn: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1.5, borderColor: theme.colors.border,
+    borderStyle: 'dashed',
+    paddingVertical: 22, paddingHorizontal: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+  },
+  pickBtnText: { fontSize: 14, color: theme.colors.text, fontFamily: theme.fonts.bold, textAlign: 'center', flex: 1 },
+
+  optionWrap: { marginBottom: 14 },
+  optionLabel: { fontSize: 13, color: theme.colors.textSecondary, fontFamily: theme.fonts.bold, textAlign: 'right', marginBottom: 6 },
+  input: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
+    borderWidth: 1, borderColor: theme.colors.border,
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 14, color: theme.colors.text,
+    fontFamily: theme.fonts.regular, textAlign: 'right',
+  },
+  textarea: { height: 110, paddingTop: 12 },
+
+  execBtn: {
+    marginHorizontal: 16, marginTop: 24,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.radius.full,
+    paddingVertical: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+  },
+  execBtnDisabled: { opacity: 0.65 },
+  execBtnText: { color: '#fff', fontSize: 16, fontFamily: theme.fonts.bold },
+
+  resultSection: { marginHorizontal: 16, marginTop: 20 },
+  resultLabel: { fontSize: 14, color: theme.colors.text, fontFamily: theme.fonts.bold, textAlign: 'right', marginBottom: 10 },
+  textResultBox: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1, borderColor: theme.colors.border,
+    padding: 16, maxHeight: 320,
+  },
+  textResultContent: { fontSize: 14, color: theme.colors.text, fontFamily: theme.fonts.regular, textAlign: 'right', lineHeight: 24 },
+
+  successBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'flex-end', marginBottom: 12 },
+  successText: { fontSize: 15, color: theme.colors.success, fontFamily: theme.fonts.bold },
+  shareBtn: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.radius.full, paddingVertical: 15,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+  },
+  shareBtnText: { color: '#fff', fontSize: 15, fontFamily: theme.fonts.bold },
+
+  supportLink: {
+    marginHorizontal: 16, marginTop: 20,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6,
+  },
+  supportLinkText: { fontSize: 12, color: theme.colors.textMuted, fontFamily: theme.fonts.regular },
 });

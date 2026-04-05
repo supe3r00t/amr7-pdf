@@ -1,37 +1,51 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { AI_TOOLS } from '@/constants/tools';
-import { router } from 'expo-router';
+import { ToolIcon } from '@/components/tool-icon';
 
 export default function AIScreen() {
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
+        <Text style={styles.kicker}>مدعوم بـ Google Gemini</Text>
         <Text style={styles.title}>الذكاء الاصطناعي</Text>
-        <Text style={styles.sub}>مدعوم بـ Gemini AI</Text>
+      </View>
+
+      {/* Info Banner */}
+      <View style={styles.infoBanner}>
+        <Ionicons name="information-circle-outline" size={18} color={theme.colors.primary} />
+        <Text style={styles.infoText}>
+          أدوات الذكاء الاصطناعي تعمل على النصوص والملفات مباشرة
+        </Text>
       </View>
 
       <FlatList
         data={AI_TOOLS}
-        keyExtractor={t => t.id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
             onPress={() => router.push(`/tool/${item.id}`)}
-            activeOpacity={0.75}
+            activeOpacity={0.8}
           >
+            {/* Icon - right side */}
             <View style={styles.iconBox}>
-              <Text style={styles.icon}>{item.icon}</Text>
+              <ToolIcon tool={item} size={26} />
             </View>
-            <View style={styles.cardText}>
+
+            {/* Text - middle */}
+            <View style={styles.textWrap}>
               <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.desc}>{getDesc(item.id)}</Text>
+              <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>
             </View>
-            <View style={styles.arrow}>
-              <Text style={styles.arrowText}>←</Text>
-            </View>
+
+            {/* Arrow - left side */}
+            <Ionicons name="chevron-back" size={18} color={theme.colors.textMuted} />
           </TouchableOpacity>
         )}
       />
@@ -39,59 +53,91 @@ export default function AIScreen() {
   );
 }
 
-function getDesc(id: string): string {
-  const map: Record<string, string> = {
-    'ai-chat': 'اسأل أسئلة عن محتوى ملف PDF',
-    'ai-summarize': 'احصل على ملخص ذكي للملف',
-    'ai-tables': 'استخرج الجداول من PDF',
-    'ai-image': 'ولّد صورة بالذكاء الاصطناعي',
-    'prompt-gen': 'ولّد برومبت احترافي لأي مهمة',
-    'prompt-check': 'افحص وحسّن برومبتك',
-    'ai-detector': 'اكشف إذا النص مكتوب بالذكاء الاصطناعي',
-    'humanizer': 'حوّل نص الذكاء لنص بشري طبيعي',
-  };
-  return map[id] || '';
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+
   header: {
-    paddingTop: 65, paddingBottom: 20, paddingHorizontal: 16,
+    paddingTop: 60,
+    paddingBottom: 16,
+    paddingHorizontal: 18,
     backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1, borderBottomColor: theme.colors.border,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    alignItems: 'flex-end',
   },
-  title: { fontSize: 26, fontWeight: '900', color: theme.colors.text, textAlign: 'right' },
-  sub: { fontSize: 13, color: theme.colors.textMuted, textAlign: 'right', marginTop: 4 },
-  list: { padding: 16, gap: 12, paddingBottom: 40 },
+  kicker: {
+    fontSize: 12,
+    color: theme.colors.primary,
+    fontFamily: theme.fonts.bold,
+  },
+  title: {
+    marginTop: 2,
+    fontSize: 26,
+    color: theme.colors.text,
+    fontFamily: theme.fonts.black,
+    textAlign: 'right',
+  },
+
+  infoBanner: {
+    marginHorizontal: 14,
+    marginTop: 12,
+    backgroundColor: theme.colors.primarySoft,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: `${theme.colors.primary}25`,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
+    fontFamily: theme.fonts.regular,
+    textAlign: 'right',
+    lineHeight: 20,
+  },
+
+  list: { padding: 14, gap: 10, paddingBottom: 40 },
   card: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.primary + '30',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    gap: 12,
   },
   iconBox: {
-    width: 54, height: 54, borderRadius: 16,
-    backgroundColor: '#FFF8E1',
-    alignItems: 'center', justifyContent: 'center',
-    marginLeft: 14,
+    width: 54,
+    height: 54,
+    borderRadius: theme.radius.md,
+    backgroundColor: `${theme.colors.primary}12`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
-  icon: { fontSize: 28 },
-  cardText: { flex: 1, alignItems: 'flex-end' },
-  name: { fontSize: 16, fontWeight: '800', color: theme.colors.text },
-  desc: { fontSize: 12, color: theme.colors.textMuted, marginTop: 4, textAlign: 'right' },
-  arrow: {
-    width: 32, height: 32, borderRadius: 10,
-    backgroundColor: theme.colors.primaryLight,
-    alignItems: 'center', justifyContent: 'center',
-    marginRight: 6,
+  textWrap: {
+    flex: 1,
+    alignItems: 'flex-end',
   },
-  arrowText: { fontSize: 16, color: theme.colors.primary, fontWeight: '900' },
+  name: {
+    width: '100%',
+    textAlign: 'right',
+    color: theme.colors.text,
+    fontSize: 16,
+    fontFamily: theme.fonts.bold,
+  },
+  desc: {
+    width: '100%',
+    marginTop: 3,
+    textAlign: 'right',
+    color: theme.colors.textMuted,
+    fontSize: 12,
+    fontFamily: theme.fonts.regular,
+    lineHeight: 20,
+  },
 });

@@ -1,41 +1,44 @@
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, ScrollView } from 'react-native';
+import { useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  ScrollView,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { theme } from '@/constants/theme';
 import { ALL_TOOLS, CATEGORIES } from '@/constants/tools';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { ToolIcon } from '@/components/tool-icon';
 
 export default function ToolsScreen() {
-  const [active, setActive] = useState('all');
+  const [active, setActive] = useState<'all' | 'pdf' | 'convert' | 'ai'>('all');
   const [search, setSearch] = useState('');
 
-  const filtered = ALL_TOOLS.filter(t => {
-    const matchCat = active === 'all' || t.category === active;
-    const matchSearch = search === '' || t.name.includes(search);
-    return matchCat && matchSearch;
-  });
-
-  const catColors: Record<string, string> = {
-    all: theme.colors.primary,
-    pdf: '#E53935',
-    convert: '#1E88E5',
-    ai: '#FB8C00',
-    business: '#43A047',
-    dev: '#8E24AA',
-  };
+  const filtered = useMemo(() => {
+    return ALL_TOOLS.filter((tool) => {
+      const matchCategory = active === 'all' || tool.category === active;
+      const keyword = search.trim();
+      const matchSearch =
+        keyword === '' || tool.name.includes(keyword) || tool.description.includes(keyword);
+      return matchCategory && matchSearch;
+    });
+  }, [active, search]);
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
+        <Text style={styles.kicker}>{ALL_TOOLS.length} أداة فعلية</Text>
         <Text style={styles.title}>جميع الأدوات</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{ALL_TOOLS.length}</Text>
-        </View>
       </View>
 
       {/* Search */}
       <View style={styles.searchWrap}>
-        <Text style={styles.searchIcon}>🔍</Text>
+        <Ionicons name="search-outline" size={19} color={theme.colors.textMuted} />
         <TextInput
           style={styles.searchInput}
           placeholder="ابحث عن أداة..."
@@ -45,58 +48,63 @@ export default function ToolsScreen() {
           textAlign="right"
         />
         {search !== '' && (
-          <TouchableOpacity onPress={() => setSearch('')}>
-            <Text style={{ fontSize: 16, color: theme.colors.textMuted, marginLeft: 8 }}>✕</Text>
+          <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="close-circle" size={18} color={theme.colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Categories */}
-      <View style={styles.catContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catList}>
-          {CATEGORIES.map(cat => {
+      {/* Category Chips */}
+      <View style={styles.catWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.catList}
+        >
+          {CATEGORIES.map((cat) => {
             const isActive = active === cat.id;
-            const color = catColors[cat.id] || theme.colors.primary;
             return (
               <TouchableOpacity
                 key={cat.id}
-                style={[styles.chip, isActive && { backgroundColor: color, borderColor: color }]}
+                style={[styles.chip, isActive && styles.chipActive]}
                 onPress={() => setActive(cat.id)}
-                activeOpacity={0.7}
+                activeOpacity={0.8}
               >
-                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{cat.name}</Text>
+                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                  {cat.name}
+                </Text>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
       </View>
 
-      {/* Count */}
-      <Text style={styles.count}>{filtered.length} أداة</Text>
+      <Text style={styles.count}>{filtered.length} نتيجة</Text>
 
-      {/* Grid */}
       <FlatList
         data={filtered}
-        keyExtractor={t => t.id}
+        keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => {
-          const color = catColors[item.category] || theme.colors.primary;
-          return (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => router.push(`/tool/${item.id}`)}
-              activeOpacity={0.75}
-            >
-              <View style={[styles.iconBox, { backgroundColor: color + '18' }]}>
-                <Text style={styles.icon}>{item.icon}</Text>
-              </View>
-              <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
-            </TouchableOpacity>
-          );
-        }}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => router.push(`/tool/${item.id}`)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.iconBox}>
+              <ToolIcon tool={item} size={26} />
+            </View>
+            <Text style={styles.name} numberOfLines={2}>
+              {item.name}
+            </Text>
+            <Text style={styles.desc} numberOfLines={2}>
+              {item.description}
+            </Text>
+          </TouchableOpacity>
+        )}
       />
     </View>
   );
@@ -104,61 +112,118 @@ export default function ToolsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
+
   header: {
-    paddingTop: 65, paddingBottom: 14, paddingHorizontal: 16,
+    paddingTop: 60,
+    paddingBottom: 16,
+    paddingHorizontal: 18,
     backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1, borderBottomColor: theme.colors.border,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    alignItems: 'flex-end',
   },
-  title: { fontSize: 26, fontWeight: '900', color: theme.colors.text },
-  badge: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: 50, paddingHorizontal: 10, paddingVertical: 4,
+  kicker: {
+    fontSize: 12,
+    color: theme.colors.textMuted,
+    fontFamily: theme.fonts.regular,
   },
-  badgeText: { color: '#fff', fontSize: 13, fontWeight: '800' },
+  title: {
+    marginTop: 2,
+    fontSize: 26,
+    color: theme.colors.text,
+    fontFamily: theme.fonts.black,
+    textAlign: 'right',
+  },
+
   searchWrap: {
-    flexDirection: 'row', alignItems: 'center',
+    marginTop: 12,
+    marginHorizontal: 14,
     backgroundColor: theme.colors.surface,
-    margin: 12, borderRadius: 50,
-    borderWidth: 1, borderColor: theme.colors.border,
-    paddingHorizontal: 16, height: 46,
-  },
-  searchIcon: { fontSize: 16, marginLeft: 6 },
-  searchInput: { flex: 1, fontSize: 14, color: theme.colors.text },
-  catContainer: {
-    backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1, borderBottomColor: theme.colors.border,
-  },
-  catList: {
-    paddingHorizontal: 12, paddingVertical: 10,
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-  },
-  chip: {
-    height: 34, paddingHorizontal: 16,
-    borderRadius: 50, borderWidth: 1.5,
+    borderRadius: theme.radius.full,
+    borderWidth: 1,
     borderColor: theme.colors.border,
-    backgroundColor: theme.colors.background,
-    justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: 14,
+    height: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  chipText: { fontSize: 13, fontWeight: '700', color: theme.colors.textMuted },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: theme.colors.text,
+    fontFamily: theme.fonts.regular,
+    textAlign: 'right',
+  },
+
+  catWrap: { marginTop: 10 },
+  catList: { paddingHorizontal: 14, gap: 8 },
+  chip: {
+    height: 38,
+    paddingHorizontal: 18,
+    borderRadius: theme.radius.full,
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chipActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  chipText: {
+    color: theme.colors.textMuted,
+    fontSize: 13,
+    fontFamily: theme.fonts.bold,
+  },
   chipTextActive: { color: '#fff' },
+
   count: {
-    fontSize: 12, color: theme.colors.textMuted,
-    textAlign: 'right', paddingHorizontal: 16, paddingVertical: 6,
+    marginTop: 10,
+    marginBottom: 4,
+    paddingHorizontal: 16,
+    textAlign: 'right',
+    color: theme.colors.textMuted,
+    fontSize: 12,
+    fontFamily: theme.fonts.regular,
   },
-  listContent: { padding: 10, paddingBottom: 40 },
+
+  listContent: { paddingHorizontal: 10, paddingBottom: 36, paddingTop: 4 },
   row: { gap: 10, marginBottom: 10 },
   card: {
-    flex: 1, backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.lg, padding: 16, alignItems: 'center',
-    borderWidth: 1, borderColor: theme.colors.border,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.lg,
+    padding: 16,
+    minHeight: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconBox: {
-    width: 58, height: 58, borderRadius: 16,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 10,
+    width: 58,
+    height: 58,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
   },
-  icon: { fontSize: 28 },
-  name: { fontSize: 13, color: theme.colors.text, textAlign: 'center', fontWeight: '700', lineHeight: 18 },
+  name: {
+    textAlign: 'center',
+    color: theme.colors.text,
+    fontSize: 14,
+    fontFamily: theme.fonts.bold,
+    lineHeight: 20,
+  },
+  desc: {
+    marginTop: 4,
+    textAlign: 'center',
+    color: theme.colors.textMuted,
+    fontSize: 11,
+    fontFamily: theme.fonts.regular,
+    lineHeight: 18,
+  },
 });
