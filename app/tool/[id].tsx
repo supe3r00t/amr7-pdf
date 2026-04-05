@@ -122,6 +122,12 @@ const TOOL_OPTIONS: Record<string, { label: string; key: string; placeholder: st
 
 export default function ToolScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+
+  // شاشات خاصة
+  if (id === 'zakat') {
+    router.replace('/tool/zakat');
+    return null;
+  }
   const tool = getToolById(id);
   const [files, setFiles] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
   const [loading, setLoading] = useState(false);
