@@ -1,21 +1,18 @@
 {
   "expo": {
     "name": "آمر 7 PDF",
-    "slug": "amr7-pdf-tools",
+    "slug": "amr7-pdf",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "amr7pdf",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-
     "icon": "./assets/images/icon.png",
-
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#F7F8F7"
     },
-
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "sa.amr7.pdf",
@@ -24,7 +21,6 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
-
     "android": {
       "package": "sa.amr7.pdf",
       "versionCode": 1,
@@ -33,11 +29,9 @@
         "backgroundColor": "#F7F8F7"
       }
     },
-
     "web": {
       "favicon": "./assets/images/icon.png"
     },
-
     "plugins": [
       "expo-router",
       [
@@ -52,14 +46,12 @@
       "expo-document-picker",
       "expo-mail-composer"
     ],
-
     "experiments": {
       "typedRoutes": true
     },
-
     "extra": {
       "eas": {
-        "projectId": "PUT_EAS_PROJECT_ID_HERE"
+        "projectId": "2e0e469e-6a9e-4cd1-a5d5-117af32dcec9"
       }
     }
   }
