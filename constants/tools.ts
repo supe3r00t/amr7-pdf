@@ -100,6 +100,14 @@ export const CONVERT_TOOLS  = ALL_TOOLS.filter((t) => t.category === 'convert');
 export const BUSINESS_TOOLS = ALL_TOOLS.filter((t) => t.category === 'business');
 
 export const HOME_PDF_IDS = ['merge', 'split', 'compress', 'protect', 'ocr', 'rotate'];
-export const HOME_AI_IDS  = ['ai-chat', 'ai-summarize', 'prompt-gen', 'humanizer'];
+// تعديل قائمة أدوات الذكاء الاصطناعي في الرئيسية لتصبح 6 أدوات (للتوازن البصري 3×2)
+export const HOME_AI_IDS  = [
+    'ai-chat',
+    'ai-summarize',
+    'prompt-gen',
+    'humanizer',
+    'ai-tables',   // إضافة جديدة للرئيسية
+    'prompt-check' // إضافة جديدة للرئيسية
+];
 
-export const getToolById = (id?: string) => ALL_TOOLS.find((t) => t.id === id);// سيتم إضافتها قبل السطر الأخير
+export const getToolById = (id?: string) => ALL_TOOLS.find((t) => t.id === id);
