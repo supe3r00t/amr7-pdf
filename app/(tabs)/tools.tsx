@@ -203,6 +203,7 @@ const styles = StyleSheet.create({
         fontFamily: theme.fonts.bold,
         fontSize: 12,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     listContent: {
@@ -255,6 +256,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginBottom: 4,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     desc: {
         color: theme.colors.textMuted,
@@ -262,6 +264,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         lineHeight: 18,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     emptyState: {

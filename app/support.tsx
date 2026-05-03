@@ -19,6 +19,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
+import { arabicErrorForException, arabicErrorForStatus } from '@/constants/api-errors';
 import { AppHeader, Chip } from '@/components/premium-ui';
 
 const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
@@ -69,7 +70,8 @@ export default function SupportScreen() {
             const responseData = await response.json().catch(() => null);
 
             if (!response.ok) {
-                throw new Error(responseData?.message || responseData?.error || `خطأ من الخادم برمز: ${response.status}`);
+                const serverMessage = responseData?.message || responseData?.error;
+                throw new Error(arabicErrorForStatus(response.status, serverMessage));
             }
 
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -78,14 +80,10 @@ export default function SupportScreen() {
             setMessage('');
             setName('');
             setToolName('');
-        } catch (error: any) {
+        } catch (error: unknown) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            const isNetworkError = error.message === 'Network request failed' || error.message.includes('Network');
-            const alertMessage = isNetworkError
-                ? 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى.'
-                : 'حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.';
-
-            Alert.alert('عذراً', `${alertMessage}\n\nيمكنك استخدام محادثة واتساب كبديل فوري.`);
+            const arabic = arabicErrorForException(error);
+            Alert.alert('تعذّر الإرسال', `${arabic}\n\nيمكنك استخدام واتساب كبديل فوري.`);
         } finally {
             setSending(false);
         }
@@ -213,6 +211,7 @@ const styles = StyleSheet.create({
         fontSize: 13,
         marginBottom: 8,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     optional: {
         color: theme.colors.textMuted,

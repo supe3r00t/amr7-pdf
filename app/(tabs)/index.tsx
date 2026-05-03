@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import {
     Animated,
     Dimensions,
@@ -14,36 +14,61 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { PremiumPressable } from '@/components/premium-pressable';
 import { ToolIcon } from '@/components/tool-icon';
+import { BrandMark } from '@/components/brand-mark';
 import { SectionHeader } from '@/components/premium-ui';
 import { theme } from '@/constants/theme';
 import { ALL_TOOLS, HOME_AI_IDS, HOME_PDF_IDS } from '@/constants/tools';
 
 const { width } = Dimensions.get('window');
 const GRID_GAP = 12;
-const GRID_HORIZONTAL_PADDING = 20;
-const cardWidth = (width - GRID_HORIZONTAL_PADDING * 2 - GRID_GAP) / 2;
+const GRID_PADDING = 20;
+const cardWidth = (width - GRID_PADDING * 2 - GRID_GAP) / 2;
 
 const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
 
 const QUICK_ACTIONS = [
-    { id: 'merge', label: 'دمج', icon: 'set-merge' },
-    { id: 'compress', label: 'ضغط', icon: 'archive-arrow-down-outline' },
-    { id: 'pdf-to-jpg', label: 'تحويل', icon: 'file-image-outline' },
-    { id: 'ai-summarize', label: 'تلخيص', icon: 'text-box-search-outline' },
+    {
+        id: 'merge',
+        label: 'دمج PDF',
+        sub: 'اجمع الملفات',
+        icon: 'set-merge' as const,
+    },
+    {
+        id: 'compress',
+        label: 'ضغط PDF',
+        sub: 'قلّل الحجم',
+        icon: 'archive-arrow-down-outline' as const,
+    },
+    {
+        id: 'pdf-to-jpg',
+        label: 'تحويل PDF',
+        sub: 'إلى صور',
+        icon: 'file-image-outline' as const,
+    },
 ];
+
+function getArabicGreeting(): string {
+    const hour = new Date().getHours();
+    if (hour < 5) return 'سهرة سعيدة';
+    if (hour < 12) return 'صباح الخير';
+    if (hour < 17) return 'يوم موفق';
+    if (hour < 21) return 'مساء الخير';
+    return 'مساء الخير';
+}
 
 export default function HomeScreen() {
     const insets = useSafeAreaInsets();
+    const greeting = useMemo(getArabicGreeting, []);
     const quickPDF = ALL_TOOLS.filter((tool) => HOME_PDF_IDS.includes(tool.id));
     const quickAI = ALL_TOOLS.filter((tool) => HOME_AI_IDS.includes(tool.id));
     const fadeIn = useRef(new Animated.Value(0)).current;
-    const slideUp = useRef(new Animated.Value(12)).current;
+    const slideUp = useRef(new Animated.Value(14)).current;
 
     useEffect(() => {
         Animated.parallel([
             Animated.timing(fadeIn, {
                 toValue: 1,
-                duration: 420,
+                duration: 460,
                 useNativeDriver: true,
             }),
             Animated.spring(slideUp, {
@@ -58,6 +83,11 @@ export default function HomeScreen() {
     const handlePress = (path: string) => {
         Haptics.selectionAsync();
         router.push(path as never);
+    };
+
+    const handleStart = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        router.push('/tools' as never);
     };
 
     return (
@@ -79,25 +109,50 @@ export default function HomeScreen() {
                 >
                     <View style={styles.headerTop}>
                         <View style={styles.brandRow}>
-                            <View style={styles.brandMark}>
-                                <Text style={styles.brandMarkText}>7</Text>
-                            </View>
-                            <View>
-                                <Text style={styles.brandTitle}>آمر 7</Text>
-                                <Text style={styles.brandSubtitle}>منصة الإنتاجية الذكية</Text>
+                            <BrandMark size={48} glow />
+                            <View style={styles.brandText}>
+                                <Text style={styles.greeting}>{greeting} 👋</Text>
+                                <Text style={styles.greetingSub}>أهلاً بك في منصتك الذكية</Text>
                             </View>
                         </View>
                         <PremiumPressable
                             style={styles.helpButton}
                             onPress={() => handlePress('/support')}
                         >
-                            <Ionicons name="headset-outline" size={20} color={theme.colors.text} />
+                            <Ionicons name="notifications-outline" size={20} color={theme.colors.text} />
                         </PremiumPressable>
                     </View>
+                </Animated.View>
 
-                    <View style={styles.greeting}>
-                        <Text style={styles.greetingHi}>أهلاً بك 👋</Text>
-                        <Text style={styles.greetingTitle}>أنجز مهام مستنداتك بسرعة وأمان</Text>
+                <Animated.View style={[styles.heroCard, { opacity: fadeIn }]}>
+                    <View style={styles.heroAccent} />
+                    <View style={styles.heroBadge}>
+                        <Ionicons name="sparkles" size={11} color={theme.colors.primaryLight} />
+                        <Text style={styles.heroBadgeText}>منصة آمر 7 الذكية</Text>
+                    </View>
+                    <Text style={styles.heroTitle}>
+                        أنجز مهام مستنداتك{'\n'}بسرعة وأمان
+                    </Text>
+                    <Text style={styles.heroDesc}>
+                        أدوات PDF وذكاء اصطناعي بتجربة عربية فاخرة، لمحترفي الأعمال والإنتاجية.
+                    </Text>
+                    <View style={styles.heroActions}>
+                        <PremiumPressable style={styles.ctaPrimary} onPress={handleStart}>
+                            <Text style={styles.ctaPrimaryText}>ابدأ الآن</Text>
+                            <Ionicons
+                                name={I18nManager.isRTL ? 'arrow-back' : 'arrow-forward'}
+                                size={18}
+                                color={theme.colors.white}
+                            />
+                        </PremiumPressable>
+                        <PremiumPressable style={styles.ctaGhost} onPress={() => handlePress('/ai')}>
+                            <MaterialCommunityIcons
+                                name="auto-fix"
+                                size={18}
+                                color={theme.colors.primaryLight}
+                            />
+                            <Text style={styles.ctaGhostText}>آمر AI</Text>
+                        </PremiumPressable>
                     </View>
                 </Animated.View>
 
@@ -110,12 +165,13 @@ export default function HomeScreen() {
                         >
                             <View style={styles.quickActionIcon}>
                                 <MaterialCommunityIcons
-                                    name={action.icon as any}
+                                    name={action.icon}
                                     size={22}
                                     color={theme.colors.primary}
                                 />
                             </View>
                             <Text style={styles.quickActionLabel}>{action.label}</Text>
+                            <Text style={styles.quickActionSub}>{action.sub}</Text>
                         </PremiumPressable>
                     ))}
                 </View>
@@ -123,19 +179,21 @@ export default function HomeScreen() {
                 <View style={styles.metaCard}>
                     <View style={styles.metaItem}>
                         <Text style={styles.metaNum}>{ALL_TOOLS.length}+</Text>
-                        <Text style={styles.metaLabel}>أداة متاحة</Text>
-                    </View>
-                    <View style={styles.metaDivider} />
-                    <View style={styles.metaItem}>
-                        <Text style={styles.metaNum}>RTL</Text>
-                        <Text style={styles.metaLabel}>تجربة عربية</Text>
+                        <Text style={styles.metaLabel}>أداة</Text>
                     </View>
                     <View style={styles.metaDivider} />
                     <View style={styles.metaItem}>
                         <View style={styles.metaIconRow}>
                             <Ionicons name="shield-checkmark" size={18} color={theme.colors.primary} />
                         </View>
-                        <Text style={styles.metaLabel}>معالجة آمنة</Text>
+                        <Text style={styles.metaLabel}>تشفير TLS</Text>
+                    </View>
+                    <View style={styles.metaDivider} />
+                    <View style={styles.metaItem}>
+                        <View style={styles.metaIconRow}>
+                            <Ionicons name="trash-outline" size={18} color={theme.colors.primary} />
+                        </View>
+                        <Text style={styles.metaLabel}>حذف تلقائي</Text>
                     </View>
                 </View>
 
@@ -228,10 +286,10 @@ const styles = StyleSheet.create({
         paddingBottom: 32,
     },
 
-    /* --- Header --- */
+    /* --- Top brand bar --- */
     headerWrap: {
+        paddingBottom: 16,
         paddingHorizontal: 20,
-        paddingBottom: 20,
     },
     headerTop: {
         alignItems: 'center',
@@ -243,31 +301,23 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 12,
     },
-    brandMark: {
-        alignItems: 'center',
-        backgroundColor: theme.colors.primaryDark,
-        borderRadius: 12,
-        height: 40,
-        justifyContent: 'center',
-        width: 40,
+    brandText: {
+        alignItems: 'flex-start',
     },
-    brandMarkText: {
-        color: theme.colors.primaryLight,
-        fontFamily: theme.fonts.black,
-        fontSize: 20,
-        marginTop: -2,
-    },
-    brandTitle: {
+    greeting: {
         color: theme.colors.text,
         fontFamily: theme.fonts.black,
-        fontSize: 17,
+        fontSize: 16,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
-    brandSubtitle: {
+    greetingSub: {
         color: theme.colors.textMuted,
         fontFamily: theme.fonts.medium,
-        fontSize: 11,
+        fontSize: 12,
+        marginTop: 2,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     helpButton: {
         alignItems: 'center',
@@ -279,48 +329,138 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         width: 40,
     },
-    greeting: {
-        marginTop: 24,
-    },
-    greetingHi: {
-        ...theme.type.title,
-        color: theme.colors.textMuted,
-        textAlign: RTL_ALIGN,
-    },
-    greetingTitle: {
-        ...theme.type.h1,
-        color: theme.colors.text,
+
+    /* --- Hero card (navy + teal accent) --- */
+    heroCard: {
+        backgroundColor: theme.colors.brandDeep,
+        borderRadius: 22,
+        marginHorizontal: 20,
         marginTop: 4,
+        overflow: 'hidden',
+        padding: 22,
+        ...theme.shadow.lg,
+    },
+    heroAccent: {
+        backgroundColor: theme.colors.primary,
+        height: 3,
+        left: 22,
+        position: 'absolute',
+        right: 22,
+        top: 0,
+    },
+    heroBadge: {
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        backgroundColor: 'rgba(31, 167, 162, 0.18)',
+        borderColor: 'rgba(142, 220, 239, 0.30)',
+        borderRadius: theme.radius.full,
+        borderWidth: 1,
+        flexDirection: 'row',
+        gap: 6,
+        marginBottom: 14,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+    },
+    heroBadgeText: {
+        color: theme.colors.primaryLight,
+        fontFamily: theme.fonts.bold,
+        fontSize: 11,
+    },
+    heroTitle: {
+        color: theme.colors.white,
+        fontFamily: theme.fonts.black,
+        fontSize: 24,
+        lineHeight: 34,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
+    },
+    heroDesc: {
+        color: 'rgba(232, 236, 239, 0.78)',
+        fontFamily: theme.fonts.medium,
+        fontSize: 13,
+        lineHeight: 22,
+        marginTop: 8,
+        textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
+    },
+    heroActions: {
+        alignSelf: 'stretch',
+        flexDirection: 'row',
+        gap: 10,
+        marginTop: 18,
+    },
+    ctaPrimary: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.primary,
+        borderRadius: theme.radius.md,
+        flex: 1.4,
+        flexDirection: 'row',
+        gap: 8,
+        justifyContent: 'center',
+        paddingVertical: 14,
+        ...theme.shadow.sm,
+    },
+    ctaPrimaryText: {
+        color: theme.colors.white,
+        fontFamily: theme.fonts.black,
+        fontSize: 14,
+    },
+    ctaGhost: {
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.10)',
+        borderColor: 'rgba(255, 255, 255, 0.18)',
+        borderRadius: theme.radius.md,
+        borderWidth: 1,
+        flex: 1,
+        flexDirection: 'row',
+        gap: 6,
+        justifyContent: 'center',
+        paddingVertical: 14,
+    },
+    ctaGhostText: {
+        color: theme.colors.primaryLight,
+        fontFamily: theme.fonts.bold,
+        fontSize: 13,
     },
 
     /* --- Quick actions --- */
     quickActionsRow: {
         flexDirection: 'row',
         gap: 10,
+        marginTop: 16,
         paddingHorizontal: 20,
     },
     quickAction: {
-        alignItems: 'center',
+        alignItems: 'flex-start',
         backgroundColor: theme.colors.surface,
         borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.lg,
         borderWidth: 1,
         flex: 1,
         gap: 8,
-        paddingVertical: 14,
+        padding: 14,
     },
     quickActionIcon: {
         alignItems: 'center',
         backgroundColor: theme.colors.primarySoft,
-        borderRadius: theme.radius.full,
+        borderRadius: theme.radius.md,
         height: 38,
         justifyContent: 'center',
         width: 38,
     },
     quickActionLabel: {
-        ...theme.type.captionStrong,
         color: theme.colors.text,
+        fontFamily: theme.fonts.black,
+        fontSize: 13,
+        textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
+    },
+    quickActionSub: {
+        color: theme.colors.textMuted,
+        fontFamily: theme.fonts.medium,
+        fontSize: 11,
+        textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     /* --- Meta card --- */
@@ -332,8 +472,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         flexDirection: 'row',
         marginHorizontal: 20,
-        marginTop: 16,
-        paddingVertical: 16,
+        marginTop: 14,
+        paddingVertical: 14,
     },
     metaItem: {
         alignItems: 'center',
@@ -357,20 +497,20 @@ const styles = StyleSheet.create({
     },
     metaDivider: {
         backgroundColor: theme.colors.borderLight,
-        height: 28,
+        height: 26,
         width: 1,
     },
 
     /* --- Sections --- */
     sectionSpacer: {
-        marginTop: 28,
         marginBottom: 12,
+        marginTop: 28,
     },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         gap: GRID_GAP,
-        paddingHorizontal: GRID_HORIZONTAL_PADDING,
+        paddingHorizontal: GRID_PADDING,
     },
     toolCard: {
         alignItems: 'flex-start',
@@ -403,6 +543,7 @@ const styles = StyleSheet.create({
         fontFamily: theme.fonts.black,
         fontSize: 14,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     toolDesc: {
         color: theme.colors.textMuted,
@@ -411,6 +552,7 @@ const styles = StyleSheet.create({
         lineHeight: 18,
         marginTop: 4,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     /* --- Privacy banner --- */
@@ -423,7 +565,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 14,
         marginHorizontal: 20,
-        marginTop: 28,
+        marginTop: 24,
         padding: 16,
     },
     privacyIcon: {
@@ -442,6 +584,7 @@ const styles = StyleSheet.create({
         fontFamily: theme.fonts.black,
         fontSize: 13,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     privacySub: {
         color: theme.colors.textMuted,
@@ -450,5 +593,6 @@ const styles = StyleSheet.create({
         lineHeight: 18,
         marginTop: 2,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 });

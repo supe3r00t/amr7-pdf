@@ -20,6 +20,7 @@ import { WebView } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { theme } from '@/constants/theme';
+import { arabicErrorForException, arabicErrorForStatus } from '@/constants/api-errors';
 import { getToolById } from '@/constants/tools';
 import { ToolIcon } from '@/components/tool-icon';
 
@@ -244,22 +245,44 @@ export default function ToolScreen() {
         setLoading(true);
         try {
             const endpoint = `${API_BASE}/${API_MAP[id ?? '']}`;
-            const formData = new FormData();
 
-            if (!isNoFile) {
-                files.forEach((f) => {
-                    formData.append(isMulti ? 'files' : 'file', {
-                        uri: f.uri, name: f.name,
-                        type: f.mimeType ?? 'application/pdf',
-                    } as any);
-                });
-            }
-            Object.entries(options).forEach(([k, v]) => { if (v) formData.append(k, v); });
+            // For text-only tools (no file), backend expects JSON. Sending
+            // multipart with an empty file list triggers 405/415. Switch
+            // request shape based on whether a file is part of the payload.
+            const fetchInit: RequestInit = isNoFile
+                ? {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(options),
+                }
+                : (() => {
+                    const formData = new FormData();
+                    files.forEach((f) => {
+                        formData.append(isMulti ? 'files' : 'file', {
+                            uri: f.uri,
+                            name: f.name,
+                            type: f.mimeType ?? 'application/pdf',
+                        } as any);
+                    });
+                    Object.entries(options).forEach(([k, v]) => {
+                        if (v) formData.append(k, v);
+                    });
+                    return {
+                        method: 'POST',
+                        headers: { Accept: 'application/json' },
+                        body: formData,
+                    };
+                })();
 
-            const res = await fetch(endpoint, { method: 'POST', body: formData });
+            const res = await fetch(endpoint, fetchInit);
+
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
-                throw new Error(err?.error ?? `حدث خطأ أثناء الاتصال بالخادم (${res.status})`);
+                const serverMessage = err?.error || err?.message;
+                throw new Error(arabicErrorForStatus(res.status, serverMessage));
             }
 
             if (isTextResult) {
@@ -283,9 +306,9 @@ export default function ToolScreen() {
                 reader.readAsDataURL(blob);
                 return;
             }
-        } catch (e: any) {
+        } catch (e: unknown) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('عذراً', e.message ?? 'حدث خطأ غير متوقع أثناء المعالجة.');
+            Alert.alert('تعذّر إتمام العملية', arabicErrorForException(e));
         } finally {
             setLoading(false);
         }
@@ -581,6 +604,7 @@ const styles = StyleSheet.create({
         fontFamily: theme.fonts.black,
         fontSize: 22,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     toolDesc: {
         color: theme.colors.textMuted,
@@ -589,6 +613,7 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         marginTop: 4,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     body: { paddingHorizontal: 20, paddingTop: 8 },
@@ -608,6 +633,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         marginBottom: 14,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     /* --- File picker --- */
@@ -674,6 +700,7 @@ const styles = StyleSheet.create({
         fontSize: 13,
         marginBottom: 6,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     input: {
         backgroundColor: theme.colors.background,
@@ -762,6 +789,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         lineHeight: 24,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     shareBtn: {

@@ -183,6 +183,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 10,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     body: {
         color: theme.colors.textSecondary,
@@ -190,6 +191,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         lineHeight: 24,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     highlight: {
         color: theme.colors.primary,
@@ -226,6 +228,7 @@ const styles = StyleSheet.create({
         fontFamily: theme.fonts.black,
         fontSize: 14,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     featureDesc: {
         color: theme.colors.textMuted,
@@ -234,6 +237,7 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         marginTop: 2,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     linkRow: {
@@ -262,6 +266,7 @@ const styles = StyleSheet.create({
         fontFamily: theme.fonts.bold,
         fontSize: 14,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     footer: {

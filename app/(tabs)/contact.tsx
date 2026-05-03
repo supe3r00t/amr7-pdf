@@ -201,6 +201,7 @@ const styles = StyleSheet.create({
         fontFamily: theme.fonts.black,
         fontSize: 15,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     ctaSub: {
         color: 'rgba(255,255,255,0.85)',
@@ -208,6 +209,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginTop: 2,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     section: {
@@ -221,6 +223,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         marginBottom: 12,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     contactRow: {
@@ -251,6 +254,7 @@ const styles = StyleSheet.create({
         fontFamily: theme.fonts.bold,
         fontSize: 14,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     contactLabel: {
         color: theme.colors.textMuted,
@@ -258,6 +262,7 @@ const styles = StyleSheet.create({
         fontSize: 11,
         marginTop: 2,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
 
     socialRow: {

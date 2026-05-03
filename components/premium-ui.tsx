@@ -273,17 +273,20 @@ const styles = StyleSheet.create({
         color: theme.colors.primary,
         marginBottom: 4,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     headerTitle: {
         ...theme.type.h1,
         color: theme.colors.text,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     headerSubtitle: {
         ...theme.type.body,
         color: theme.colors.textMuted,
         marginTop: 4,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     headerIconBox: {
         alignItems: 'center',
@@ -310,6 +313,7 @@ const styles = StyleSheet.create({
         ...theme.type.h3,
         color: theme.colors.text,
         textAlign: RTL_ALIGN,
+        writingDirection: 'rtl',
     },
     sectionAction: {
         alignItems: 'center',
