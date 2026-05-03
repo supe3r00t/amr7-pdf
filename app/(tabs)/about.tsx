@@ -12,29 +12,30 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { theme } from '@/constants/theme';
 import { AppHeader, PremiumCard } from '@/components/premium-ui';
+import { ScreenBackground } from '@/components/screen-background';
 
 const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
 
 const FEATURES = [
     {
-        icon: 'shield-lock-outline',
-        title: 'حماية متقدمة',
-        desc: 'تشفير TLS كامل لاتصالك ومستنداتك أثناء المعالجة.',
-    },
-    {
-        icon: 'trash-can-outline',
-        title: 'حذف تلقائي',
-        desc: 'تُحذف ملفاتك من خوادمنا فور الانتهاء من المعالجة.',
+        icon: 'file-document-outline',
+        title: 'أدوات موثوقة لإدارة ملفات PDF',
+        desc: 'دمج، تقسيم، ضغط، تحويل، وحماية المستندات بسهولة.',
     },
     {
         icon: 'flash-outline',
-        title: 'معالجة فورية',
-        desc: 'بنية تحتية موثوقة تُنجز عملياتك في ثوانٍ.',
+        title: 'معالجة آمنة وسريعة',
+        desc: 'بنية تحتية مشفّرة تنفّذ عملياتك خلال ثوانٍ معدودة.',
     },
     {
-        icon: 'translate',
-        title: 'عربية أولاً',
-        desc: 'واجهة RTL خالصة، خطّ Tajawal، ومصطلحات عربية واضحة.',
+        icon: 'account-heart-outline',
+        title: 'مصمَّمة للمستخدم العربي',
+        desc: 'مصطلحات واضحة ومحتوى احترافي يناسب بيئة الأعمال.',
+    },
+    {
+        icon: 'lifebuoy',
+        title: 'دعم مباشر عند الحاجة',
+        desc: 'فريق دعم متاح للمساعدة عبر القنوات الرسمية.',
     },
 ];
 
@@ -46,7 +47,7 @@ const STATS = [
 
 const LINKS = [
     { label: 'الموقع الرسمي', url: 'https://amr-7.sa', icon: 'web' },
-    { label: 'النسخة عبر الويب', url: 'https://pdf.amr7.io', icon: 'monitor' },
+    { label: 'النسخة عبر الويب', url: 'https://pdf.amr7.sa', icon: 'monitor' },
     { label: 'دعم الأعمال (واتساب)', url: 'https://wa.me/966505336956', icon: 'whatsapp' },
 ];
 
@@ -59,94 +60,107 @@ export default function AboutScreen() {
     };
 
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
-            showsVerticalScrollIndicator={false}
-        >
-            <AppHeader
-                eyebrow="آمر 7"
-                title="منصة عربية لمستنداتك"
-                subtitle="أدوات PDF وذكاء اصطناعي بتجربة فاخرة وآمنة."
-                icon="rocket-launch-outline"
-            />
+        <ScreenBackground>
+            <ScrollView
+                contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
+                showsVerticalScrollIndicator={false}
+            >
+                <AppHeader
+                    eyebrow="آمر 7"
+                    title="منصة عربية لمستنداتك"
+                    subtitle="أدوات PDF وذكاء اصطناعي بتجربة احترافية وآمنة."
+                    icon="rocket-launch-outline"
+                />
 
-            <View style={styles.statsRow}>
-                {STATS.map((s) => (
-                    <View key={s.label} style={styles.statCard}>
-                        <Text style={styles.statNum}>{s.num}</Text>
-                        <Text style={styles.statLabel}>{s.label}</Text>
-                    </View>
-                ))}
-            </View>
-
-            <PremiumCard style={styles.section}>
-                <Text style={styles.sectionTitle}>عن المنصة</Text>
-                <Text style={styles.body}>
-                    منصة <Text style={styles.highlight}>آمر 7</Text> توفّر مجموعة متكاملة من الأدوات لمعالجة ملفات PDF
-                    وإدارة المستندات بفعالية. سواء احتجت دمج، تقسيم، ضغط، تحويل، أو تحليل بالذكاء الاصطناعي،
-                    الأدوات بين يديك بنقرة واحدة.
-                </Text>
-                <View style={styles.divider} />
-                <Text style={styles.sectionTitle}>رؤيتنا</Text>
-                <Text style={styles.body}>
-                    تمكين المستخدم العربي من إنجاز مهام مستنداته بأعلى جودة وخصوصية، عبر تجربة مصمّمة محلياً.
-                </Text>
-            </PremiumCard>
-
-            <PremiumCard style={styles.section}>
-                <Text style={styles.sectionTitle}>لماذا آمر 7؟</Text>
-                {FEATURES.map((f, index) => (
-                    <View
-                        key={f.title}
-                        style={[
-                            styles.featureRow,
-                            index === FEATURES.length - 1 && styles.featureRowLast,
-                        ]}
-                    >
-                        <View style={styles.featureIconBox}>
-                            <MaterialCommunityIcons name={f.icon as any} size={20} color={theme.colors.primary} />
+                <View style={styles.statsRow}>
+                    {STATS.map((s) => (
+                        <View key={s.label} style={styles.statCard}>
+                            <Text style={styles.statNum}>{s.num}</Text>
+                            <Text style={styles.statLabel}>{s.label}</Text>
                         </View>
-                        <View style={styles.featureText}>
-                            <Text style={styles.featureTitle}>{f.title}</Text>
-                            <Text style={styles.featureDesc}>{f.desc}</Text>
-                        </View>
-                    </View>
-                ))}
-            </PremiumCard>
+                    ))}
+                </View>
 
-            <PremiumCard style={styles.section}>
-                <Text style={styles.sectionTitle}>روابط مهمة</Text>
-                {LINKS.map((l, index) => (
-                    <TouchableOpacity
-                        key={l.url}
-                        style={[styles.linkRow, index === LINKS.length - 1 && styles.linkRowLast]}
-                        onPress={() => handleLinkPress(l.url)}
-                        activeOpacity={0.7}
-                    >
-                        <View style={styles.linkIconBox}>
-                            <MaterialCommunityIcons name={l.icon as any} size={18} color={theme.colors.primary} />
-                        </View>
-                        <Text style={styles.linkText}>{l.label}</Text>
-                        <MaterialCommunityIcons name="open-in-new" size={16} color={theme.colors.textMuted} />
-                    </TouchableOpacity>
-                ))}
-            </PremiumCard>
+                <PremiumCard style={styles.section}>
+                    <Text style={styles.sectionTitle}>عن المنصة</Text>
+                    <Text style={styles.body}>
+                        تُقدّم منصة <Text style={styles.highlight}>آمر 7</Text> مجموعة متكاملة من الأدوات لمعالجة
+                        ملفات PDF وإدارة المستندات بسهولة وفعالية. سواء احتجت دمج، تقسيم، ضغط، تحويل، أو تحليل
+                        بالذكاء الاصطناعي، الأدوات بين يديك بنقرة واحدة.
+                    </Text>
+                    <View style={styles.divider} />
+                    <Text style={styles.sectionTitle}>رؤيتنا</Text>
+                    <Text style={styles.body}>
+                        نسعى لتمكين المستخدم من إنجاز مهامه على المستندات بأعلى جودة وخصوصية، ضمن تجربة موثوقة
+                        وسهلة الاستخدام.
+                    </Text>
+                </PremiumCard>
 
-            <View style={styles.footer}>
-                <Text style={styles.footerVersion}>الإصدار v1.0.0</Text>
-                <Text style={styles.footerCopy}>© آمر 7 للحلول الرقمية</Text>
-            </View>
-        </ScrollView>
+                <PremiumCard style={styles.section}>
+                    <Text style={styles.sectionTitle}>لماذا آمر 7</Text>
+                    {FEATURES.map((f, index) => (
+                        <View
+                            key={f.title}
+                            style={[
+                                styles.featureRow,
+                                index === FEATURES.length - 1 && styles.featureRowLast,
+                            ]}
+                        >
+                            <View style={styles.featureIconBox}>
+                                <MaterialCommunityIcons
+                                    name={f.icon as any}
+                                    size={20}
+                                    color={theme.colors.primary}
+                                />
+                            </View>
+                            <View style={styles.featureText}>
+                                <Text style={styles.featureTitle}>{f.title}</Text>
+                                <Text style={styles.featureDesc}>{f.desc}</Text>
+                            </View>
+                        </View>
+                    ))}
+                </PremiumCard>
+
+                <PremiumCard style={styles.section}>
+                    <Text style={styles.sectionTitle}>روابط مهمة</Text>
+                    {LINKS.map((l, index) => (
+                        <TouchableOpacity
+                            key={l.url}
+                            style={[styles.linkRow, index === LINKS.length - 1 && styles.linkRowLast]}
+                            onPress={() => handleLinkPress(l.url)}
+                            activeOpacity={0.7}
+                        >
+                            <View style={styles.linkIconBox}>
+                                <MaterialCommunityIcons
+                                    name={l.icon as any}
+                                    size={18}
+                                    color={theme.colors.primary}
+                                />
+                            </View>
+                            <Text style={styles.linkText}>{l.label}</Text>
+                            <MaterialCommunityIcons
+                                name="open-in-new"
+                                size={16}
+                                color={theme.colors.textMuted}
+                            />
+                        </TouchableOpacity>
+                    ))}
+                </PremiumCard>
+
+                <View style={styles.footer}>
+                    <Text style={styles.footerVersion}>الإصدار v1.0.0</Text>
+                    <Text style={styles.footerCopy}>© آمر 7 للحلول الرقمية</Text>
+                </View>
+            </ScrollView>
+        </ScreenBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { backgroundColor: theme.colors.background, flex: 1 },
     content: { paddingBottom: 24 },
 
     statsRow: {
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 10,
         marginTop: 8,
         paddingHorizontal: 20,
@@ -205,7 +219,7 @@ const styles = StyleSheet.create({
 
     featureRow: {
         alignItems: 'flex-start',
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 14,
         marginBottom: 16,
     },
@@ -244,7 +258,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderBottomColor: theme.colors.borderLight,
         borderBottomWidth: 1,
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 12,
         paddingVertical: 14,
     },
@@ -274,12 +288,12 @@ const styles = StyleSheet.create({
         marginTop: 32,
     },
     footerVersion: {
-        color: theme.colors.textMuted,
+        color: theme.colors.textOnDarkMuted,
         fontFamily: theme.fonts.bold,
         fontSize: 12,
     },
     footerCopy: {
-        color: theme.colors.textMuted,
+        color: theme.colors.textOnDarkMuted,
         fontFamily: theme.fonts.regular,
         fontSize: 11,
         marginTop: 4,

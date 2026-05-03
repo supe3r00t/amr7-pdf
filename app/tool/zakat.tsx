@@ -86,14 +86,14 @@ export default function ZakatScreen() {
                         <Ionicons
                             name={I18nManager.isRTL ? 'chevron-forward' : 'chevron-back'}
                             size={22}
-                            color={theme.colors.text}
+                            color={theme.colors.textOnDark}
                         />
                     </TouchableOpacity>
                     <View style={styles.headerTitleContainer}>
                         <Text style={styles.title}>الحاسبة الزكوية</Text>
                     </View>
                     <View style={styles.headerIconBox}>
-                        <MaterialCommunityIcons name="calculator-variant-outline" size={20} color={theme.colors.primary} />
+                        <MaterialCommunityIcons name="calculator-variant-outline" size={20} color={theme.colors.primaryLight} />
                     </View>
                 </View>
 
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
 
     header: {
         alignItems: 'center',
-        backgroundColor: theme.colors.background,
+        backgroundColor: 'transparent',
         flexDirection: 'row',
         gap: 12,
         paddingBottom: 12,
@@ -182,8 +182,8 @@ const styles = StyleSheet.create({
     },
     backBtn: {
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.borderLight,
+        backgroundColor: 'rgba(255, 255, 255, 0.10)',
+        borderColor: theme.colors.borderOnDark,
         borderRadius: theme.radius.full,
         borderWidth: 1,
         height: 38,
@@ -195,15 +195,15 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        color: theme.colors.text,
+        color: theme.colors.textOnDark,
         fontFamily: theme.fonts.black,
         fontSize: 18,
         textAlign: I18nManager.isRTL ? 'right' : 'left',
     },
     headerIconBox: {
         alignItems: 'center',
-        backgroundColor: theme.colors.primarySoft,
-        borderColor: theme.colors.borderBrand,
+        backgroundColor: 'rgba(31, 167, 162, 0.18)',
+        borderColor: 'rgba(142, 220, 239, 0.28)',
         borderRadius: theme.radius.full,
         borderWidth: 1,
         height: 38,
@@ -281,5 +281,5 @@ const styles = StyleSheet.create({
     noZakatTitle: { fontSize: 20, fontFamily: theme.fonts.black, color: theme.colors.text, marginBottom: 12 },
     noZakatSub: { fontSize: 14, color: theme.colors.textSecondary, fontFamily: theme.fonts.medium, textAlign: 'center', lineHeight: 22 },
 
-    disclaimer: { fontSize: 12, color: theme.colors.textMuted, marginTop: 24, textAlign: 'center', fontFamily: theme.fonts.regular, lineHeight: 18 },
+    disclaimer: { fontSize: 12, color: theme.colors.textOnDarkMuted, marginTop: 24, textAlign: 'center', fontFamily: theme.fonts.regular, lineHeight: 18, paddingHorizontal: 24 },
 });

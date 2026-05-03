@@ -19,11 +19,17 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '@/constants/theme';
-import { arabicErrorForException, arabicErrorForStatus } from '@/constants/api-errors';
-import { AppHeader, Chip } from '@/components/premium-ui';
+import {
+    arabicErrorForException,
+    arabicErrorForStatus,
+    logRequestFailure,
+} from '@/constants/api-errors';
+import { AppHeader, Chip, PremiumCard } from '@/components/premium-ui';
+import { ScreenBackground } from '@/components/screen-background';
 
 const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
 const ISSUE_TYPES = ['استفسار عام', 'مشكلة تقنية', 'اقتراح تطوير', 'شراكة أعمال'];
+const SUPPORT_ENDPOINT = 'https://pdf.amr7.sa/api/support';
 
 export default function SupportScreen() {
     const insets = useSafeAreaInsets();
@@ -53,7 +59,7 @@ export default function SupportScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         try {
-            const response = await fetch('https://pdf.amr7.io/api/support', {
+            const response = await fetch(SUPPORT_ENDPOINT, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -70,6 +76,12 @@ export default function SupportScreen() {
             const responseData = await response.json().catch(() => null);
 
             if (!response.ok) {
+                logRequestFailure({
+                    endpoint: SUPPORT_ENDPOINT,
+                    method: 'POST',
+                    status: response.status,
+                    body: responseData,
+                });
                 const serverMessage = responseData?.message || responseData?.error;
                 throw new Error(arabicErrorForStatus(response.status, serverMessage));
             }
@@ -82,8 +94,7 @@ export default function SupportScreen() {
             setToolName('');
         } catch (error: unknown) {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            const arabic = arabicErrorForException(error);
-            Alert.alert('تعذّر الإرسال', `${arabic}\n\nيمكنك استخدام واتساب كبديل فوري.`);
+            Alert.alert('تعذّر الإرسال', `${arabicErrorForException(error)}\n\nيمكنك استخدام واتساب كبديل فوري.`);
         } finally {
             setSending(false);
         }
@@ -96,114 +107,123 @@ export default function SupportScreen() {
     };
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-            <ScrollView
-                contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
+        <ScreenBackground>
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
-                <AppHeader
-                    eyebrow="الدعم الفني"
-                    title="مركز المساعدة"
-                    subtitle="نحن هنا لدعمك. شاركنا تفاصيل طلبك."
-                    showBack
-                    onBack={() => router.back()}
-                />
+                <ScrollView
+                    contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <AppHeader
+                        eyebrow="الدعم الفني"
+                        title="مركز المساعدة"
+                        subtitle="شاركنا تفاصيل طلبك وسنرد في أقرب وقت."
+                        showBack
+                        onBack={() => router.back()}
+                    />
 
-                <View style={styles.formContainer}>
-                    <View style={styles.section}>
-                        <Text style={styles.label}>نوع الطلب</Text>
-                        <View style={styles.chips}>
-                            {ISSUE_TYPES.map((t) => (
-                                <Chip
-                                    key={t}
-                                    label={t}
-                                    active={issueType === t}
-                                    onPress={() => handleTypeSelect(t)}
-                                />
-                            ))}
+                    <PremiumCard style={styles.formCard}>
+                        <View style={styles.field}>
+                            <Text style={styles.label}>نوع الطلب</Text>
+                            <View style={styles.chips}>
+                                {ISSUE_TYPES.map((t) => (
+                                    <Chip
+                                        key={t}
+                                        label={t}
+                                        active={issueType === t}
+                                        onPress={() => handleTypeSelect(t)}
+                                    />
+                                ))}
+                            </View>
                         </View>
+
+                        <View style={styles.field}>
+                            <Text style={styles.label}>
+                                الاسم <Text style={styles.optional}>(اختياري)</Text>
+                            </Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="اسمك الكريم"
+                                placeholderTextColor={theme.colors.textPlaceholder}
+                                value={name}
+                                onChangeText={setName}
+                                textAlign={RTL_ALIGN}
+                            />
+                        </View>
+
+                        <View style={styles.field}>
+                            <Text style={styles.label}>
+                                الأداة المرتبطة <Text style={styles.optional}>(اختياري)</Text>
+                            </Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="مثال: دمج PDF"
+                                placeholderTextColor={theme.colors.textPlaceholder}
+                                value={toolName}
+                                onChangeText={setToolName}
+                                textAlign={RTL_ALIGN}
+                            />
+                        </View>
+
+                        <View style={styles.field}>
+                            <Text style={styles.label}>
+                                التفاصيل <Text style={styles.required}>*</Text>
+                            </Text>
+                            <TextInput
+                                style={[styles.input, styles.textarea]}
+                                placeholder="اكتب تفاصيل طلبك أو استفسارك بوضوح..."
+                                placeholderTextColor={theme.colors.textPlaceholder}
+                                value={message}
+                                onChangeText={setMessage}
+                                multiline
+                                numberOfLines={6}
+                                textAlignVertical="top"
+                                textAlign={RTL_ALIGN}
+                            />
+                        </View>
+                    </PremiumCard>
+
+                    <View style={styles.actions}>
+                        <TouchableOpacity
+                            style={[styles.btnPrimary, sending && styles.btnDisabled]}
+                            onPress={send}
+                            activeOpacity={0.9}
+                            disabled={sending}
+                        >
+                            {sending ? (
+                                <ActivityIndicator color="#fff" size="small" />
+                            ) : (
+                                <Ionicons name="paper-plane-outline" size={18} color="#fff" />
+                            )}
+                            <Text style={styles.btnPrimaryText}>{sending ? 'جاري الإرسال...' : 'إرسال الطلب'}</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.btnWA} onPress={sendWhatsApp} activeOpacity={0.85}>
+                            <Ionicons name="logo-whatsapp" size={18} color={theme.colors.success} />
+                            <Text style={styles.btnWAText}>واتساب فوري</Text>
+                        </TouchableOpacity>
                     </View>
-
-                    <View style={styles.section}>
-                        <Text style={styles.label}>الاسم <Text style={styles.optional}>(اختياري)</Text></Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="اسمك الكريم"
-                            placeholderTextColor={theme.colors.textPlaceholder}
-                            value={name}
-                            onChangeText={setName}
-                            textAlign={RTL_ALIGN}
-                        />
-                    </View>
-
-                    <View style={styles.section}>
-                        <Text style={styles.label}>الأداة المرتبطة <Text style={styles.optional}>(اختياري)</Text></Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="مثال: دمج PDF"
-                            placeholderTextColor={theme.colors.textPlaceholder}
-                            value={toolName}
-                            onChangeText={setToolName}
-                            textAlign={RTL_ALIGN}
-                        />
-                    </View>
-
-                    <View style={styles.section}>
-                        <Text style={styles.label}>التفاصيل <Text style={styles.required}>*</Text></Text>
-                        <TextInput
-                            style={[styles.input, styles.textarea]}
-                            placeholder="اكتب تفاصيل طلبك أو استفسارك بوضوح..."
-                            placeholderTextColor={theme.colors.textPlaceholder}
-                            value={message}
-                            onChangeText={setMessage}
-                            multiline
-                            numberOfLines={6}
-                            textAlignVertical="top"
-                            textAlign={RTL_ALIGN}
-                        />
-                    </View>
-                </View>
-
-                <View style={styles.actions}>
-                    <TouchableOpacity
-                        style={[styles.btnPrimary, sending && styles.btnDisabled]}
-                        onPress={send}
-                        activeOpacity={0.9}
-                        disabled={sending}
-                    >
-                        {sending ? (
-                            <ActivityIndicator color="#fff" size="small" />
-                        ) : (
-                            <Ionicons name="paper-plane-outline" size={18} color="#fff" />
-                        )}
-                        <Text style={styles.btnPrimaryText}>{sending ? 'جاري الإرسال...' : 'إرسال الطلب'}</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.btnWA} onPress={sendWhatsApp} activeOpacity={0.85}>
-                        <Ionicons name="logo-whatsapp" size={18} color={theme.colors.success} />
-                        <Text style={styles.btnWAText}>واتساب فوري</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </ScreenBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { backgroundColor: theme.colors.background, flex: 1 },
+    container: { flex: 1 },
     content: { flexGrow: 1 },
 
-    formContainer: {
-        paddingHorizontal: 20,
-        paddingTop: 8,
+    formCard: {
+        marginHorizontal: 20,
+        marginTop: 8,
+        padding: 18,
     },
 
-    section: {
-        marginTop: 18,
+    field: {
+        marginTop: 14,
     },
     label: {
         color: theme.colors.text,
@@ -225,7 +245,7 @@ const styles = StyleSheet.create({
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 
     input: {
-        backgroundColor: theme.colors.surface,
+        backgroundColor: theme.colors.surfaceAlt,
         borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.md,
         borderWidth: 1,
@@ -240,30 +260,32 @@ const styles = StyleSheet.create({
     actions: {
         gap: 10,
         marginHorizontal: 20,
-        marginTop: 24,
+        marginTop: 20,
     },
     btnPrimary: {
         alignItems: 'center',
         backgroundColor: theme.colors.primary,
         borderRadius: theme.radius.md,
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 8,
         justifyContent: 'center',
-        paddingVertical: 14,
-        ...theme.shadow.sm,
+        minHeight: 56,
+        paddingVertical: 16,
+        ...theme.shadow.md,
     },
     btnDisabled: { opacity: 0.65 },
     btnPrimaryText: { color: theme.colors.white, fontFamily: theme.fonts.black, fontSize: 14 },
     btnWA: {
         alignItems: 'center',
-        backgroundColor: theme.colors.successBg,
-        borderColor: 'rgba(16, 185, 129, 0.20)',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.md,
-        borderWidth: 1,
-        flexDirection: 'row',
+        borderWidth: 1.5,
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 8,
         justifyContent: 'center',
-        paddingVertical: 14,
+        minHeight: 56,
+        paddingVertical: 16,
     },
     btnWAText: { color: theme.colors.success, fontFamily: theme.fonts.black, fontSize: 14 },
 });

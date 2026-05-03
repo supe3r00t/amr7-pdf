@@ -1,5 +1,5 @@
-import { Image, StyleSheet, View } from 'react-native';
-import type { StyleProp, ViewStyle } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
+import type { ImageStyle, StyleProp } from 'react-native';
 import { theme } from '@/constants/theme';
 
 const LOGO = require('@/assets/images/logo-new.png');
@@ -7,42 +7,37 @@ const LOGO = require('@/assets/images/logo-new.png');
 type BrandMarkProps = {
     size?: number;
     glow?: boolean;
-    style?: StyleProp<ViewStyle>;
+    style?: StyleProp<ImageStyle>;
 };
 
+/**
+ * Renders the AMR7 logo image directly (no wrapper container) so the mark
+ * floats on the canvas as the brand identity. `glow` adds a teal halo.
+ */
 export function BrandMark({ size = 44, glow, style }: BrandMarkProps) {
     return (
-        <View
+        <Image
+            source={LOGO}
             style={[
-                styles.wrap,
                 {
-                    borderRadius: size * 0.26,
                     height: size,
                     width: size,
+                    borderRadius: size * 0.26,
                 },
                 glow && styles.glow,
                 style,
             ]}
-        >
-            <Image
-                source={LOGO}
-                style={{ width: size, height: size, borderRadius: size * 0.26 }}
-                resizeMode="cover"
-            />
-        </View>
+            resizeMode="cover"
+        />
     );
 }
 
 const styles = StyleSheet.create({
-    wrap: {
-        backgroundColor: theme.colors.brandDeep,
-        overflow: 'hidden',
-    },
     glow: {
         shadowColor: theme.colors.primary,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.35,
-        shadowRadius: 14,
-        elevation: 8,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.55,
+        shadowRadius: 32,
+        elevation: 14,
     },
 });

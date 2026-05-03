@@ -19,8 +19,11 @@ export type ThemeColors = {
     textSecondary: string;
     textMuted: string;
     textPlaceholder: string;
+    textOnDark: string;
+    textOnDarkMuted: string;
     border: string;
     borderLight: string;
+    borderOnDark: string;
     borderFocus: string;
     borderBrand: string;
     success: string;
@@ -90,7 +93,7 @@ const lightColors: ThemeColors = {
     brandDeep: '#0A2540',
     brandInk: '#061A2E',
     heroText: '#E8ECEF',
-    background: '#F6F8FB',
+    background: '#061A2E',
     surface: '#FFFFFF',
     card: '#FFFFFF',
     surfaceAlt: '#F1F4F8',
@@ -98,8 +101,11 @@ const lightColors: ThemeColors = {
     textSecondary: '#3A4A5C',
     textMuted: '#6B7A8C',
     textPlaceholder: '#9AA7B5',
+    textOnDark: '#FFFFFF',
+    textOnDarkMuted: 'rgba(232, 236, 239, 0.74)',
     border: '#E2E8EE',
     borderLight: '#EEF2F6',
+    borderOnDark: 'rgba(255, 255, 255, 0.10)',
     borderFocus: 'rgba(31, 167, 162, 0.36)',
     borderBrand: 'rgba(31, 167, 162, 0.22)',
     success: '#10B981',
@@ -133,8 +139,11 @@ const darkColors: ThemeColors = {
     textSecondary: '#CBD5E1',
     textMuted: '#94A3B8',
     textPlaceholder: '#64748B',
+    textOnDark: '#FFFFFF',
+    textOnDarkMuted: 'rgba(232, 236, 239, 0.74)',
     border: '#243846',
     borderLight: '#243846',
+    borderOnDark: 'rgba(255, 255, 255, 0.10)',
     borderFocus: 'rgba(107, 200, 190, 0.38)',
     borderBrand: 'rgba(107, 200, 190, 0.25)',
     success: '#4ADE80',

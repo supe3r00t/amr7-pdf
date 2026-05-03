@@ -29,8 +29,8 @@ const styles = StyleSheet.create({
     },
     backBtn: {
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.borderLight,
+        backgroundColor: 'rgba(255, 255, 255, 0.10)',
+        borderColor: theme.colors.borderOnDark,
         borderRadius: theme.radius.full,
         borderWidth: 1,
         height: 38,
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
         width: 38,
     },
     headerTitle: {
-        color: theme.colors.text,
+        color: theme.colors.textOnDark,
         fontFamily: theme.fonts.black,
         fontSize: 17,
     },
@@ -65,14 +65,14 @@ const styles = StyleSheet.create({
     },
     heroTitle: {
         fontSize: 22,
-        color: theme.colors.text,
+        color: theme.colors.textOnDark,
         fontFamily: theme.fonts.black,
         marginBottom: 10,
         textAlign: 'center',
     },
     heroDesc: {
         fontSize: 14,
-        color: theme.colors.textSecondary,
+        color: theme.colors.textOnDarkMuted,
         fontFamily: theme.fonts.regular,
         textAlign: 'center',
         lineHeight: 24,
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
         marginTop: 40,
         paddingTop: 24,
         borderTopWidth: 1,
-        borderTopColor: theme.colors.border,
+        borderTopColor: theme.colors.borderOnDark,
         gap: 20,
     },
     footerRow: {
@@ -186,12 +186,12 @@ const styles = StyleSheet.create({
     },
     footerLabel: {
         fontSize: 13,
-        color: theme.colors.textMuted,
+        color: theme.colors.textOnDarkMuted,
         fontFamily: theme.fonts.medium,
     },
     footerValue: {
         fontSize: 13,
-        color: theme.colors.text,
+        color: theme.colors.textOnDark,
         fontFamily: theme.fonts.bold,
     },
     contactBtn: {

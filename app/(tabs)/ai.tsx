@@ -7,6 +7,7 @@ import { AI_TOOLS } from '@/constants/tools';
 import { ToolIcon } from '@/components/tool-icon';
 import { AppHeader } from '@/components/premium-ui';
 import { PremiumPressable } from '@/components/premium-pressable';
+import { ScreenBackground } from '@/components/screen-background';
 
 const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
 
@@ -17,11 +18,11 @@ export default function AIScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <ScreenBackground>
             <AppHeader
                 eyebrow="آمر AI"
                 title="أدوات ذكاء اصطناعي"
-                subtitle="حلّل، لخّص، وأعد صياغة المستندات والنصوص بدقّة عربية."
+                subtitle="حلّل، لخّص، وأعد صياغة المستندات والنصوص."
                 icon="auto-fix"
             />
 
@@ -62,20 +63,18 @@ export default function AIScreen() {
                     </PremiumPressable>
                 )}
             />
-        </View>
+        </ScreenBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { backgroundColor: theme.colors.background, flex: 1 },
-
     banner: {
         alignItems: 'center',
-        backgroundColor: theme.colors.primarySoft,
-        borderColor: theme.colors.borderBrand,
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.md,
         borderWidth: 1,
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 10,
         marginHorizontal: 20,
         marginTop: 8,
@@ -84,7 +83,7 @@ const styles = StyleSheet.create({
     },
     bannerIcon: {
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
+        backgroundColor: theme.colors.primarySoft,
         borderRadius: theme.radius.full,
         height: 28,
         justifyContent: 'center',
@@ -113,7 +112,7 @@ const styles = StyleSheet.create({
         borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.lg,
         borderWidth: 1,
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 14,
         padding: 14,
     },

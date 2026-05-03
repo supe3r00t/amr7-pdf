@@ -14,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 import { theme } from '@/constants/theme';
 import { AppHeader, PremiumCard } from '@/components/premium-ui';
 import { PremiumPressable } from '@/components/premium-pressable';
+import { ScreenBackground } from '@/components/screen-background';
 
 const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
 
@@ -90,17 +91,17 @@ export default function ContactScreen() {
     };
 
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
-            showsVerticalScrollIndicator={false}
-        >
-            <AppHeader
-                eyebrow="مركز المساعدة"
-                title="نحن هنا لمساعدتك"
-                subtitle="اختر القناة الأنسب أو افتح تذكرة دعم."
-                icon="headset"
-            />
+        <ScreenBackground>
+            <ScrollView
+                contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
+                showsVerticalScrollIndicator={false}
+            >
+                <AppHeader
+                    eyebrow="مركز المساعدة"
+                    title="نحن هنا لمساعدتك"
+                    subtitle="اختر القناة الأنسب أو افتح تذكرة دعم."
+                    icon="headset"
+                />
 
             <PremiumPressable style={styles.ctaCard} onPress={openSupportTicket}>
                 <View style={styles.ctaIcon}>
@@ -162,23 +163,23 @@ export default function ContactScreen() {
                 </View>
             </PremiumCard>
 
-            <View style={styles.note}>
-                <Ionicons name="time-outline" size={14} color={theme.colors.textMuted} />
-                <Text style={styles.noteText}>الأحد – الخميس · 9:00 ص – 6:00 م</Text>
-            </View>
-        </ScrollView>
+                <View style={styles.note}>
+                    <Ionicons name="time-outline" size={14} color={theme.colors.textOnDarkMuted} />
+                    <Text style={styles.noteText}>الأحد – الخميس · 9:00 ص – 6:00 م</Text>
+                </View>
+            </ScrollView>
+        </ScreenBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { backgroundColor: theme.colors.background, flex: 1 },
     content: { paddingBottom: 32 },
 
     ctaCard: {
         alignItems: 'center',
         backgroundColor: theme.colors.primary,
         borderRadius: theme.radius.lg,
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 14,
         marginHorizontal: 20,
         marginTop: 8,
@@ -230,7 +231,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderBottomColor: theme.colors.borderLight,
         borderBottomWidth: 1,
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 12,
         paddingVertical: 12,
     },
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
     },
 
     socialRow: {
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 10,
     },
     socialBtn: {
@@ -280,14 +281,14 @@ const styles = StyleSheet.create({
 
     note: {
         alignItems: 'center',
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 6,
         justifyContent: 'center',
         marginHorizontal: 20,
         marginTop: 18,
     },
     noteText: {
-        color: theme.colors.textMuted,
+        color: theme.colors.textOnDarkMuted,
         fontFamily: theme.fonts.medium,
         fontSize: 12,
     },

@@ -131,7 +131,7 @@ export function AppHeader({
                         <Ionicons
                             name={I18nManager.isRTL ? 'chevron-forward' : 'chevron-back'}
                             size={22}
-                            color={theme.colors.text}
+                            color={theme.colors.textOnDark}
                         />
                     </TouchableOpacity>
                 )}
@@ -149,7 +149,7 @@ export function AppHeader({
                         <MaterialCommunityIcons
                             name={icon as any}
                             size={20}
-                            color={theme.colors.primary}
+                            color={theme.colors.primaryLight}
                         />
                     </View>
                 ) : null}
@@ -211,22 +211,22 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: 8,
         justifyContent: 'center',
-        minHeight: 50,
-        paddingHorizontal: 18,
-        paddingVertical: 14,
+        minHeight: 56,
+        paddingHorizontal: 22,
+        paddingVertical: 16,
     },
     buttonPrimary: {
         backgroundColor: theme.colors.primary,
-        ...theme.shadow.sm,
+        ...theme.shadow.md,
     },
     buttonSecondary: {
-        backgroundColor: theme.colors.primarySoft,
-        borderColor: theme.colors.borderBrand,
-        borderWidth: 1,
+        backgroundColor: 'transparent',
+        borderColor: theme.colors.primary,
+        borderWidth: 1.5,
     },
     buttonGhost: {
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.border,
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+        borderColor: theme.colors.borderOnDark,
         borderWidth: 1,
     },
     buttonDisabled: {
@@ -234,6 +234,8 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         ...theme.type.button,
+        fontFamily: theme.fonts.black,
+        fontSize: 16,
         textAlign: 'center',
     },
     buttonTextPrimary: {
@@ -245,19 +247,19 @@ const styles = StyleSheet.create({
 
     /* --- Header --- */
     header: {
-        backgroundColor: theme.colors.background,
+        backgroundColor: 'transparent',
         paddingBottom: 16,
         paddingHorizontal: 20,
     },
     headerRow: {
         alignItems: 'center',
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 12,
     },
     backButton: {
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.borderLight,
+        backgroundColor: 'rgba(255, 255, 255, 0.10)',
+        borderColor: theme.colors.borderOnDark,
         borderRadius: theme.radius.full,
         borderWidth: 1,
         height: 38,
@@ -270,28 +272,28 @@ const styles = StyleSheet.create({
     },
     eyebrow: {
         ...theme.type.eyebrow,
-        color: theme.colors.primary,
+        color: theme.colors.primaryLight,
         marginBottom: 4,
         textAlign: RTL_ALIGN,
         writingDirection: 'rtl',
     },
     headerTitle: {
         ...theme.type.h1,
-        color: theme.colors.text,
+        color: theme.colors.textOnDark,
         textAlign: RTL_ALIGN,
         writingDirection: 'rtl',
     },
     headerSubtitle: {
         ...theme.type.body,
-        color: theme.colors.textMuted,
+        color: theme.colors.textOnDarkMuted,
         marginTop: 4,
         textAlign: RTL_ALIGN,
         writingDirection: 'rtl',
     },
     headerIconBox: {
         alignItems: 'center',
-        backgroundColor: theme.colors.primarySoft,
-        borderColor: theme.colors.borderBrand,
+        backgroundColor: 'rgba(31, 167, 162, 0.18)',
+        borderColor: 'rgba(142, 220, 239, 0.28)',
         borderRadius: theme.radius.full,
         borderWidth: 1,
         height: 40,
@@ -305,24 +307,24 @@ const styles = StyleSheet.create({
     /* --- Section header --- */
     sectionHeader: {
         alignItems: 'center',
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         justifyContent: 'space-between',
         paddingHorizontal: 20,
     },
     sectionTitle: {
         ...theme.type.h3,
-        color: theme.colors.text,
+        color: theme.colors.textOnDark,
         textAlign: RTL_ALIGN,
         writingDirection: 'rtl',
     },
     sectionAction: {
         alignItems: 'center',
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 4,
     },
     sectionActionText: {
         ...theme.type.captionStrong,
-        color: theme.colors.primary,
+        color: theme.colors.primaryLight,
     },
 
     /* --- Chip --- */

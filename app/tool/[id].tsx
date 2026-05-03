@@ -20,15 +20,21 @@ import { WebView } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { theme } from '@/constants/theme';
-import { arabicErrorForException, arabicErrorForStatus } from '@/constants/api-errors';
+import {
+    arabicErrorForException,
+    arabicErrorForStatus,
+    logRequestFailure,
+} from '@/constants/api-errors';
+import { executeToolRequest } from '@/constants/api-request';
 import { getToolById } from '@/constants/tools';
 import { ToolIcon } from '@/components/tool-icon';
+import { ScreenBackground } from '@/components/screen-background';
 
 const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
 
 // ─── ثوابت ───────────────────────────────────────────────
-const API_BASE = 'https://pdf.amr7.io/api';
-const WEB_BASE = 'https://pdf.amr7.io/tools';
+const API_BASE = 'https://pdf.amr7.sa/api';
+const WEB_BASE = 'https://pdf.amr7.sa/tools';
 
 const WEBVIEW_TOOLS = new Set([
     'sign-pdf', 'fill-pdf-form', 'edit-pdf-text', 'pdf-reader',
@@ -131,7 +137,7 @@ function ToolWebView({ toolId, toolName, onBack }: { toolId: string; toolName: s
     const url  = `${WEB_BASE}/${slug}`;
 
     return (
-        <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <View style={{ flex: 1, backgroundColor: theme.colors.surface }}>
             <View style={[wvStyles.header, { paddingTop: Math.max(insets.top, 12) + 8 }]}>
                 <TouchableOpacity style={wvStyles.backBtn} onPress={onBack} activeOpacity={0.7}>
                     <Ionicons
@@ -177,24 +183,31 @@ export default function ToolScreen() {
     const insets    = useSafeAreaInsets();
     const tool      = getToolById(id);
 
-    const [files,      setFiles]      = useState<DocumentPicker.DocumentPickerAsset[]>([]);
-    const [loading,    setLoading]    = useState(false);
-    const [done,       setDone]       = useState(false);
-    const [resultUri,  setResultUri]  = useState<string | null>(null);
-    const [textResult, setTextResult] = useState<string | null>(null);
-    const [options,    setOptions]    = useState<ToolOptions>({});
+    const [files,       setFiles]       = useState<DocumentPicker.DocumentPickerAsset[]>([]);
+    const [loading,     setLoading]     = useState(false);
+    const [done,        setDone]        = useState(false);
+    const [resultUri,   setResultUri]   = useState<string | null>(null);
+    const [textResult,  setTextResult]  = useState<string | null>(null);
+    const [options,     setOptions]     = useState<ToolOptions>({});
+    const [unavailable, setUnavailable] = useState(false);
 
     if (!tool) {
         return (
-            <View style={styles.center}>
-                <View style={styles.notFoundIcon}>
-                    <MaterialCommunityIcons name="alert-circle-outline" size={32} color={theme.colors.textMuted} />
+            <ScreenBackground>
+                <View style={styles.center}>
+                    <View style={styles.notFoundIcon}>
+                        <MaterialCommunityIcons
+                            name="alert-circle-outline"
+                            size={32}
+                            color={theme.colors.textOnDarkMuted}
+                        />
+                    </View>
+                    <Text style={styles.notFoundText}>الأداة غير متوفرة حالياً</Text>
+                    <TouchableOpacity style={styles.backLink} onPress={() => router.back()}>
+                        <Text style={styles.backLinkText}>العودة</Text>
+                    </TouchableOpacity>
                 </View>
-                <Text style={styles.notFoundText}>الأداة غير متوفرة حالياً</Text>
-                <TouchableOpacity style={styles.backLink} onPress={() => router.back()}>
-                    <Text style={styles.backLinkText}>العودة</Text>
-                </TouchableOpacity>
-            </View>
+            </ScreenBackground>
         );
     }
 
@@ -246,41 +259,28 @@ export default function ToolScreen() {
         try {
             const endpoint = `${API_BASE}/${API_MAP[id ?? '']}`;
 
-            // For text-only tools (no file), backend expects JSON. Sending
-            // multipart with an empty file list triggers 405/415. Switch
-            // request shape based on whether a file is part of the payload.
-            const fetchInit: RequestInit = isNoFile
-                ? {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify(options),
-                }
-                : (() => {
-                    const formData = new FormData();
-                    files.forEach((f) => {
-                        formData.append(isMulti ? 'files' : 'file', {
-                            uri: f.uri,
-                            name: f.name,
-                            type: f.mimeType ?? 'application/pdf',
-                        } as any);
-                    });
-                    Object.entries(options).forEach(([k, v]) => {
-                        if (v) formData.append(k, v);
-                    });
-                    return {
-                        method: 'POST',
-                        headers: { Accept: 'application/json' },
-                        body: formData,
-                    };
-                })();
-
-            const res = await fetch(endpoint, fetchInit);
+            // Send the request with automatic JSON ↔ multipart fallback on
+            // 405/415 so the client survives either backend convention.
+            const res = await executeToolRequest({
+                endpoint,
+                isNoFile,
+                isMulti,
+                files,
+                options,
+            });
 
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
+                logRequestFailure({
+                    endpoint,
+                    method: 'POST',
+                    status: res.status,
+                    body: err,
+                });
+                if (res.status === 405 || res.status === 415) {
+                    setUnavailable(true);
+                    return;
+                }
                 const serverMessage = err?.error || err?.message;
                 throw new Error(arabicErrorForStatus(res.status, serverMessage));
             }
@@ -332,28 +332,29 @@ export default function ToolScreen() {
         Haptics.selectionAsync();
         setFiles([]); setDone(false);
         setResultUri(null); setTextResult(null); setOptions({});
+        setUnavailable(false);
     };
 
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-        >
+        <ScreenBackground>
+            <ScrollView
+                contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
             <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) + 8 }]}>
                 <View style={styles.headerRow}>
                     <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
                         <Ionicons
                             name={I18nManager.isRTL ? 'chevron-forward' : 'chevron-back'}
                             size={22}
-                            color={theme.colors.text}
+                            color={theme.colors.textOnDark}
                         />
                     </TouchableOpacity>
 
                     <View style={styles.headerCenter}>
                         <View style={styles.toolIconBox}>
-                            <ToolIcon tool={tool} size={22} />
+                            <ToolIcon tool={tool} size={22} color={theme.colors.primaryLight} />
                         </View>
                     </View>
 
@@ -367,7 +368,45 @@ export default function ToolScreen() {
             </View>
 
             <View style={styles.body}>
-                {!isNoFile && !done && (
+                {unavailable && (
+                    <View style={styles.unavailableWrap}>
+                        <View style={styles.unavailableCard}>
+                            <View style={styles.unavailableIconRing}>
+                                <View style={styles.unavailableIcon}>
+                                    <MaterialCommunityIcons
+                                        name="progress-wrench"
+                                        size={36}
+                                        color={theme.colors.primary}
+                                    />
+                                </View>
+                            </View>
+                            <Text style={styles.unavailableTitle}>تعذّر تنفيذ الطلب</Text>
+                            <Text style={styles.unavailableMessage}>
+                                الأداة حالياً غير مفعّلة أو تحت التحديث.
+                            </Text>
+                            <Text style={styles.unavailableSecondary}>
+                                يمكنك تجربة أداة أخرى الآن.
+                            </Text>
+                            <TouchableOpacity
+                                style={styles.unavailableBtn}
+                                onPress={() => {
+                                    Haptics.selectionAsync();
+                                    router.replace('/tools' as never);
+                                }}
+                                activeOpacity={0.85}
+                            >
+                                <MaterialCommunityIcons
+                                    name="apps"
+                                    size={18}
+                                    color={theme.colors.white}
+                                />
+                                <Text style={styles.unavailableBtnText}>العودة للأدوات</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+
+                {!unavailable && !isNoFile && !done && (
                     <View style={styles.section}>
                         <Text style={styles.sectionLabel}>{isMulti ? 'إرفاق المستندات' : 'إرفاق المستند'}</Text>
                         <TouchableOpacity
@@ -400,7 +439,7 @@ export default function ToolScreen() {
                     </View>
                 )}
 
-                {!done && toolOpts.length > 0 && (
+                {!unavailable && !done && toolOpts.length > 0 && (
                     <View style={styles.section}>
                         <Text style={styles.sectionLabel}>إعدادات المعالجة</Text>
                         {toolOpts.map((opt) => (
@@ -422,7 +461,7 @@ export default function ToolScreen() {
                     </View>
                 )}
 
-                {!done ? (
+                {!unavailable && !done && (
                     <TouchableOpacity
                         style={[styles.execBtn, loading && styles.execBtnDisabled]}
                         onPress={execute}
@@ -441,7 +480,9 @@ export default function ToolScreen() {
                             </>
                         )}
                     </TouchableOpacity>
-                ) : (
+                )}
+
+                {!unavailable && done && (
                     <View style={styles.resultCard}>
                         <View style={styles.successHeader}>
                             <View style={styles.successIconBox}>
@@ -482,7 +523,8 @@ export default function ToolScreen() {
                     <Text style={styles.supportBannerText}>تواجه مشكلة؟ تواصل مع فريق الدعم</Text>
                 </TouchableOpacity>
             </View>
-        </ScrollView>
+            </ScrollView>
+        </ScreenBackground>
     );
 }
 
@@ -500,7 +542,7 @@ const wvStyles = StyleSheet.create({
     },
     backBtn: {
         alignItems: 'center',
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.surfaceAlt,
         borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.full,
         borderWidth: 1,
@@ -531,12 +573,10 @@ const wvStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-    container: { backgroundColor: theme.colors.background, flex: 1 },
     content: { paddingBottom: 40 },
 
     center: {
         alignItems: 'center',
-        backgroundColor: theme.colors.background,
         flex: 1,
         gap: 14,
         justifyContent: 'center',
@@ -544,27 +584,27 @@ const styles = StyleSheet.create({
     },
     notFoundIcon: {
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.borderLight,
+        backgroundColor: 'rgba(255, 255, 255, 0.10)',
+        borderColor: theme.colors.borderOnDark,
         borderRadius: theme.radius.full,
         borderWidth: 1,
         height: 64,
         justifyContent: 'center',
         width: 64,
     },
-    notFoundText: { color: theme.colors.text, fontFamily: theme.fonts.black, fontSize: 16, textAlign: 'center' },
+    notFoundText: { color: theme.colors.textOnDark, fontFamily: theme.fonts.black, fontSize: 16, textAlign: 'center' },
     backLink: {
-        backgroundColor: theme.colors.primarySoft,
+        backgroundColor: theme.colors.primary,
         borderRadius: theme.radius.full,
         marginTop: 4,
         paddingHorizontal: 22,
         paddingVertical: 10,
     },
-    backLinkText: { color: theme.colors.primary, fontFamily: theme.fonts.bold, fontSize: 14 },
+    backLinkText: { color: theme.colors.white, fontFamily: theme.fonts.bold, fontSize: 14 },
 
     /* --- Header --- */
     header: {
-        backgroundColor: theme.colors.background,
+        backgroundColor: 'transparent',
         paddingBottom: 12,
         paddingHorizontal: 20,
     },
@@ -575,8 +615,8 @@ const styles = StyleSheet.create({
     },
     backBtn: {
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.borderLight,
+        backgroundColor: 'rgba(255, 255, 255, 0.10)',
+        borderColor: theme.colors.borderOnDark,
         borderRadius: theme.radius.full,
         borderWidth: 1,
         height: 38,
@@ -588,8 +628,8 @@ const styles = StyleSheet.create({
     },
     toolIconBox: {
         alignItems: 'center',
-        backgroundColor: theme.colors.primarySoft,
-        borderColor: theme.colors.borderBrand,
+        backgroundColor: 'rgba(31, 167, 162, 0.18)',
+        borderColor: 'rgba(142, 220, 239, 0.28)',
         borderRadius: theme.radius.md,
         borderWidth: 1,
         height: 44,
@@ -600,14 +640,14 @@ const styles = StyleSheet.create({
         marginTop: 16,
     },
     toolName: {
-        color: theme.colors.text,
+        color: theme.colors.textOnDark,
         fontFamily: theme.fonts.black,
         fontSize: 22,
         textAlign: RTL_ALIGN,
         writingDirection: 'rtl',
     },
     toolDesc: {
-        color: theme.colors.textMuted,
+        color: theme.colors.textOnDarkMuted,
         fontFamily: theme.fonts.medium,
         fontSize: 13,
         lineHeight: 20,
@@ -639,7 +679,7 @@ const styles = StyleSheet.create({
     /* --- File picker --- */
     pickBtn: {
         alignItems: 'center',
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.surfaceAlt,
         borderColor: theme.colors.borderBrand,
         borderRadius: theme.radius.md,
         borderStyle: 'dashed',
@@ -703,7 +743,7 @@ const styles = StyleSheet.create({
         writingDirection: 'rtl',
     },
     input: {
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.surfaceAlt,
         borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.md,
         borderWidth: 1,
@@ -774,7 +814,7 @@ const styles = StyleSheet.create({
     },
 
     textResultContainer: {
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.surfaceAlt,
         borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.md,
         borderWidth: 1,
@@ -838,5 +878,84 @@ const styles = StyleSheet.create({
         color: theme.colors.textSecondary,
         fontFamily: theme.fonts.medium,
         fontSize: 12,
+    },
+
+    /* --- Branded unavailable / 405 view --- */
+    unavailableWrap: {
+        alignItems: 'center',
+        flex: 1,
+        justifyContent: 'center',
+        paddingTop: 40,
+    },
+    unavailableCard: {
+        alignItems: 'center',
+        alignSelf: 'stretch',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.xl,
+        borderWidth: 1,
+        paddingHorizontal: 24,
+        paddingVertical: 36,
+        ...theme.shadow.md,
+    },
+    unavailableIconRing: {
+        alignItems: 'center',
+        backgroundColor: 'rgba(31, 167, 162, 0.10)',
+        borderRadius: theme.radius.full,
+        height: 96,
+        justifyContent: 'center',
+        marginBottom: 22,
+        width: 96,
+    },
+    unavailableIcon: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.primarySoft,
+        borderRadius: theme.radius.full,
+        height: 72,
+        justifyContent: 'center',
+        width: 72,
+    },
+    unavailableTitle: {
+        color: theme.colors.text,
+        fontFamily: theme.fonts.black,
+        fontSize: 20,
+        marginBottom: 10,
+        textAlign: 'center',
+        writingDirection: 'rtl',
+    },
+    unavailableMessage: {
+        color: theme.colors.textSecondary,
+        fontFamily: theme.fonts.medium,
+        fontSize: 14,
+        lineHeight: 22,
+        textAlign: 'center',
+        writingDirection: 'rtl',
+    },
+    unavailableSecondary: {
+        color: theme.colors.textMuted,
+        fontFamily: theme.fonts.regular,
+        fontSize: 13,
+        marginTop: 6,
+        textAlign: 'center',
+        writingDirection: 'rtl',
+    },
+    unavailableBtn: {
+        alignItems: 'center',
+        alignSelf: 'stretch',
+        backgroundColor: theme.colors.primary,
+        borderRadius: theme.radius.md,
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
+        gap: 8,
+        justifyContent: 'center',
+        marginTop: 24,
+        minHeight: 54,
+        paddingHorizontal: 28,
+        paddingVertical: 16,
+        ...theme.shadow.md,
+    },
+    unavailableBtnText: {
+        color: theme.colors.white,
+        fontFamily: theme.fonts.black,
+        fontSize: 15,
     },
 });

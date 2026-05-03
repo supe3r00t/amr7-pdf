@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import {
     Animated,
     Dimensions,
@@ -6,6 +6,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TouchableOpacity,
     View,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -15,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { PremiumPressable } from '@/components/premium-pressable';
 import { ToolIcon } from '@/components/tool-icon';
 import { BrandMark } from '@/components/brand-mark';
+import { ScreenBackground } from '@/components/screen-background';
 import { SectionHeader } from '@/components/premium-ui';
 import { theme } from '@/constants/theme';
 import { ALL_TOOLS, HOME_AI_IDS, HOME_PDF_IDS } from '@/constants/tools';
@@ -24,41 +26,28 @@ const GRID_GAP = 12;
 const GRID_PADDING = 20;
 const cardWidth = (width - GRID_PADDING * 2 - GRID_GAP) / 2;
 
-const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
+const RTL_ROW: 'row' | 'row-reverse' = I18nManager.isRTL ? 'row' : 'row-reverse';
 
 const QUICK_ACTIONS = [
     {
         id: 'merge',
         label: 'دمج PDF',
-        sub: 'اجمع الملفات',
         icon: 'set-merge' as const,
     },
     {
         id: 'compress',
         label: 'ضغط PDF',
-        sub: 'قلّل الحجم',
         icon: 'archive-arrow-down-outline' as const,
     },
     {
         id: 'pdf-to-jpg',
         label: 'تحويل PDF',
-        sub: 'إلى صور',
         icon: 'file-image-outline' as const,
     },
 ];
 
-function getArabicGreeting(): string {
-    const hour = new Date().getHours();
-    if (hour < 5) return 'سهرة سعيدة';
-    if (hour < 12) return 'صباح الخير';
-    if (hour < 17) return 'يوم موفق';
-    if (hour < 21) return 'مساء الخير';
-    return 'مساء الخير';
-}
-
 export default function HomeScreen() {
     const insets = useSafeAreaInsets();
-    const greeting = useMemo(getArabicGreeting, []);
     const quickPDF = ALL_TOOLS.filter((tool) => HOME_PDF_IDS.includes(tool.id));
     const quickAI = ALL_TOOLS.filter((tool) => HOME_AI_IDS.includes(tool.id));
     const fadeIn = useRef(new Animated.Value(0)).current;
@@ -68,7 +57,7 @@ export default function HomeScreen() {
         Animated.parallel([
             Animated.timing(fadeIn, {
                 toValue: 1,
-                duration: 460,
+                duration: 480,
                 useNativeDriver: true,
             }),
             Animated.spring(slideUp, {
@@ -91,111 +80,75 @@ export default function HomeScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <ScreenBackground>
             <ScrollView
-                style={styles.container}
                 contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
                 showsVerticalScrollIndicator={false}
             >
                 <Animated.View
                     style={[
-                        styles.headerWrap,
+                        styles.hero,
                         {
-                            paddingTop: Math.max(insets.top, 12) + 8,
+                            paddingTop: Math.max(insets.top, 16) + 16,
                             opacity: fadeIn,
                             transform: [{ translateY: slideUp }],
                         },
                     ]}
                 >
-                    <View style={styles.headerTop}>
-                        <View style={styles.brandRow}>
-                            <BrandMark size={48} glow />
-                            <View style={styles.brandText}>
-                                <Text style={styles.greeting}>{greeting} 👋</Text>
-                                <Text style={styles.greetingSub}>أهلاً بك في منصتك الذكية</Text>
-                            </View>
-                        </View>
-                        <PremiumPressable
-                            style={styles.helpButton}
-                            onPress={() => handlePress('/support')}
-                        >
-                            <Ionicons name="notifications-outline" size={20} color={theme.colors.text} />
-                        </PremiumPressable>
-                    </View>
+                    <BrandMark size={88} glow style={styles.heroLogo} />
+                    <Text style={styles.heroEyebrow}>أدوات PDF وذكاء اصطناعي</Text>
+                    <Text style={styles.heroTitle}>أنجز مستنداتك باحتراف</Text>
+                    <Text style={styles.heroSub}>سرعة، أمان، ونتائج فورية</Text>
+
+                    <PremiumPressable style={styles.cta} onPress={handleStart}>
+                        <Text style={styles.ctaText}>ابدأ الآن</Text>
+                        <Ionicons
+                            name={I18nManager.isRTL ? 'arrow-back' : 'arrow-forward'}
+                            size={18}
+                            color={theme.colors.white}
+                        />
+                    </PremiumPressable>
                 </Animated.View>
 
-                <Animated.View style={[styles.heroCard, { opacity: fadeIn }]}>
-                    <View style={styles.heroAccent} />
-                    <View style={styles.heroBadge}>
-                        <Ionicons name="sparkles" size={11} color={theme.colors.primaryLight} />
-                        <Text style={styles.heroBadgeText}>منصة آمر 7 الذكية</Text>
-                    </View>
-                    <Text style={styles.heroTitle}>
-                        أنجز مهام مستنداتك{'\n'}بسرعة وأمان
-                    </Text>
-                    <Text style={styles.heroDesc}>
-                        أدوات PDF وذكاء اصطناعي بتجربة عربية فاخرة، لمحترفي الأعمال والإنتاجية.
-                    </Text>
-                    <View style={styles.heroActions}>
-                        <PremiumPressable style={styles.ctaPrimary} onPress={handleStart}>
-                            <Text style={styles.ctaPrimaryText}>ابدأ الآن</Text>
-                            <Ionicons
-                                name={I18nManager.isRTL ? 'arrow-back' : 'arrow-forward'}
-                                size={18}
-                                color={theme.colors.white}
-                            />
-                        </PremiumPressable>
-                        <PremiumPressable style={styles.ctaGhost} onPress={() => handlePress('/ai')}>
-                            <MaterialCommunityIcons
-                                name="auto-fix"
-                                size={18}
-                                color={theme.colors.primaryLight}
-                            />
-                            <Text style={styles.ctaGhostText}>آمر AI</Text>
-                        </PremiumPressable>
-                    </View>
-                </Animated.View>
-
-                <View style={styles.quickActionsRow}>
-                    {QUICK_ACTIONS.map((action) => (
-                        <PremiumPressable
-                            key={action.id}
-                            style={styles.quickAction}
-                            onPress={() => handlePress(`/tool/${action.id}`)}
-                        >
-                            <View style={styles.quickActionIcon}>
-                                <MaterialCommunityIcons
-                                    name={action.icon}
-                                    size={22}
-                                    color={theme.colors.primary}
-                                />
-                            </View>
-                            <Text style={styles.quickActionLabel}>{action.label}</Text>
-                            <Text style={styles.quickActionSub}>{action.sub}</Text>
-                        </PremiumPressable>
-                    ))}
-                </View>
-
-                <View style={styles.metaCard}>
+                <View style={[styles.metaCard, { flexDirection: RTL_ROW }]}>
                     <View style={styles.metaItem}>
                         <Text style={styles.metaNum}>{ALL_TOOLS.length}+</Text>
                         <Text style={styles.metaLabel}>أداة</Text>
                     </View>
                     <View style={styles.metaDivider} />
                     <View style={styles.metaItem}>
-                        <View style={styles.metaIconRow}>
-                            <Ionicons name="shield-checkmark" size={18} color={theme.colors.primary} />
-                        </View>
+                        <Ionicons name="shield-checkmark" size={18} color={theme.colors.primary} />
                         <Text style={styles.metaLabel}>تشفير TLS</Text>
                     </View>
                     <View style={styles.metaDivider} />
                     <View style={styles.metaItem}>
-                        <View style={styles.metaIconRow}>
-                            <Ionicons name="trash-outline" size={18} color={theme.colors.primary} />
-                        </View>
+                        <Ionicons name="trash-outline" size={18} color={theme.colors.primary} />
                         <Text style={styles.metaLabel}>حذف تلقائي</Text>
                     </View>
                 </View>
+
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.quickChipsScroll}
+                    contentContainerStyle={styles.quickChipsRow}
+                >
+                    {QUICK_ACTIONS.map((action) => (
+                        <TouchableOpacity
+                            key={action.id}
+                            style={styles.quickChip}
+                            onPress={() => handlePress(`/tool/${action.id}`)}
+                            activeOpacity={0.85}
+                        >
+                            <MaterialCommunityIcons
+                                name={action.icon}
+                                size={16}
+                                color={theme.colors.primary}
+                            />
+                            <Text style={styles.quickChipLabel}>{action.label}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
 
                 <View style={styles.sectionSpacer}>
                     <SectionHeader
@@ -254,7 +207,7 @@ export default function HomeScreen() {
                 </View>
 
                 <PremiumPressable
-                    style={styles.privacyBanner}
+                    style={[styles.privacyBanner, { flexDirection: RTL_ROW }]}
                     onPress={() => handlePress('/about')}
                 >
                     <View style={styles.privacyIcon}>
@@ -266,245 +219,139 @@ export default function HomeScreen() {
                             معالجة مشفّرة وحذف تلقائي للملفات بعد الانتهاء.
                         </Text>
                     </View>
-                    <Ionicons
-                        name={I18nManager.isRTL ? 'chevron-back' : 'chevron-forward'}
-                        size={16}
-                        color={theme.colors.textMuted}
-                    />
                 </PremiumPressable>
             </ScrollView>
-        </View>
+        </ScreenBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        backgroundColor: theme.colors.background,
-        flex: 1,
-    },
     content: {
         paddingBottom: 32,
     },
 
-    /* --- Top brand bar --- */
-    headerWrap: {
-        paddingBottom: 16,
-        paddingHorizontal: 20,
+    /* --- Hero (right-aligned) --- */
+    hero: {
+        alignItems: 'stretch',
+        paddingBottom: 28,
+        paddingHorizontal: 24,
     },
-    headerTop: {
-        alignItems: 'center',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    heroLogo: {
+        alignSelf: I18nManager.isRTL ? 'flex-start' : 'flex-end',
     },
-    brandRow: {
-        alignItems: 'center',
-        flexDirection: 'row',
-        gap: 12,
-    },
-    brandText: {
-        alignItems: 'flex-start',
-    },
-    greeting: {
-        color: theme.colors.text,
-        fontFamily: theme.fonts.black,
-        fontSize: 16,
-        textAlign: RTL_ALIGN,
-        writingDirection: 'rtl',
-    },
-    greetingSub: {
-        color: theme.colors.textMuted,
-        fontFamily: theme.fonts.medium,
-        fontSize: 12,
-        marginTop: 2,
-        textAlign: RTL_ALIGN,
-        writingDirection: 'rtl',
-    },
-    helpButton: {
-        alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.borderLight,
-        borderRadius: theme.radius.full,
-        borderWidth: 1,
-        height: 40,
-        justifyContent: 'center',
-        width: 40,
-    },
-
-    /* --- Hero card (navy + teal accent) --- */
-    heroCard: {
-        backgroundColor: theme.colors.brandDeep,
-        borderRadius: 22,
-        marginHorizontal: 20,
-        marginTop: 4,
-        overflow: 'hidden',
-        padding: 22,
-        ...theme.shadow.lg,
-    },
-    heroAccent: {
-        backgroundColor: theme.colors.primary,
-        height: 3,
-        left: 22,
-        position: 'absolute',
-        right: 22,
-        top: 0,
-    },
-    heroBadge: {
-        alignItems: 'center',
-        alignSelf: 'flex-start',
-        backgroundColor: 'rgba(31, 167, 162, 0.18)',
-        borderColor: 'rgba(142, 220, 239, 0.30)',
-        borderRadius: theme.radius.full,
-        borderWidth: 1,
-        flexDirection: 'row',
-        gap: 6,
-        marginBottom: 14,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-    },
-    heroBadgeText: {
+    heroEyebrow: {
         color: theme.colors.primaryLight,
         fontFamily: theme.fonts.bold,
-        fontSize: 11,
+        fontSize: 12,
+        letterSpacing: 0.6,
+        marginTop: 28,
+        textAlign: 'right',
+        writingDirection: 'rtl',
     },
     heroTitle: {
-        color: theme.colors.white,
+        color: theme.colors.textOnDark,
         fontFamily: theme.fonts.black,
-        fontSize: 24,
-        lineHeight: 34,
-        textAlign: RTL_ALIGN,
+        fontSize: 32,
+        lineHeight: 44,
+        marginTop: 10,
+        textAlign: 'right',
         writingDirection: 'rtl',
     },
-    heroDesc: {
-        color: 'rgba(232, 236, 239, 0.78)',
+    heroSub: {
+        color: theme.colors.textOnDarkMuted,
         fontFamily: theme.fonts.medium,
-        fontSize: 13,
+        fontSize: 14,
         lineHeight: 22,
         marginTop: 8,
-        textAlign: RTL_ALIGN,
+        textAlign: 'right',
         writingDirection: 'rtl',
     },
-    heroActions: {
-        alignSelf: 'stretch',
-        flexDirection: 'row',
-        gap: 10,
-        marginTop: 18,
-    },
-    ctaPrimary: {
+    cta: {
         alignItems: 'center',
+        alignSelf: 'stretch',
         backgroundColor: theme.colors.primary,
         borderRadius: theme.radius.md,
-        flex: 1.4,
-        flexDirection: 'row',
-        gap: 8,
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
+        gap: 10,
         justifyContent: 'center',
-        paddingVertical: 14,
-        ...theme.shadow.sm,
+        marginTop: 28,
+        minHeight: 58,
+        paddingVertical: 16,
+        shadowColor: theme.colors.primary,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.40,
+        shadowRadius: 22,
+        elevation: 8,
     },
-    ctaPrimaryText: {
+    ctaText: {
         color: theme.colors.white,
         fontFamily: theme.fonts.black,
-        fontSize: 14,
-    },
-    ctaGhost: {
-        alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.10)',
-        borderColor: 'rgba(255, 255, 255, 0.18)',
-        borderRadius: theme.radius.md,
-        borderWidth: 1,
-        flex: 1,
-        flexDirection: 'row',
-        gap: 6,
-        justifyContent: 'center',
-        paddingVertical: 14,
-    },
-    ctaGhostText: {
-        color: theme.colors.primaryLight,
-        fontFamily: theme.fonts.bold,
-        fontSize: 13,
+        fontSize: 16,
     },
 
-    /* --- Quick actions --- */
-    quickActionsRow: {
-        flexDirection: 'row',
-        gap: 10,
-        marginTop: 16,
-        paddingHorizontal: 20,
-    },
-    quickAction: {
-        alignItems: 'flex-start',
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.borderLight,
-        borderRadius: theme.radius.lg,
-        borderWidth: 1,
-        flex: 1,
-        gap: 8,
-        padding: 14,
-    },
-    quickActionIcon: {
-        alignItems: 'center',
-        backgroundColor: theme.colors.primarySoft,
-        borderRadius: theme.radius.md,
-        height: 38,
-        justifyContent: 'center',
-        width: 38,
-    },
-    quickActionLabel: {
-        color: theme.colors.text,
-        fontFamily: theme.fonts.black,
-        fontSize: 13,
-        textAlign: RTL_ALIGN,
-        writingDirection: 'rtl',
-    },
-    quickActionSub: {
-        color: theme.colors.textMuted,
-        fontFamily: theme.fonts.medium,
-        fontSize: 11,
-        textAlign: RTL_ALIGN,
-        writingDirection: 'rtl',
-    },
-
-    /* --- Meta card --- */
+    /* --- Meta strip --- */
     metaCard: {
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.borderLight,
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+        borderColor: theme.colors.borderOnDark,
         borderRadius: theme.radius.lg,
         borderWidth: 1,
-        flexDirection: 'row',
         marginHorizontal: 20,
-        marginTop: 14,
+        marginTop: 4,
         paddingVertical: 14,
     },
     metaItem: {
         alignItems: 'center',
         flex: 1,
-        gap: 4,
-    },
-    metaIconRow: {
-        alignItems: 'center',
-        height: 22,
-        justifyContent: 'center',
+        gap: 6,
     },
     metaNum: {
-        color: theme.colors.text,
+        color: theme.colors.textOnDark,
         fontFamily: theme.fonts.black,
         fontSize: 18,
     },
     metaLabel: {
-        color: theme.colors.textMuted,
+        color: theme.colors.textOnDarkMuted,
         fontFamily: theme.fonts.medium,
         fontSize: 11,
     },
     metaDivider: {
-        backgroundColor: theme.colors.borderLight,
+        backgroundColor: theme.colors.borderOnDark,
         height: 26,
         width: 1,
     },
 
+    /* --- Quick actions (horizontal chips) --- */
+    quickChipsScroll: {
+        marginTop: 14,
+    },
+    quickChipsRow: {
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
+        gap: 8,
+        paddingHorizontal: 20,
+    },
+    quickChip: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.full,
+        borderWidth: 1,
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
+        gap: 6,
+        height: 38,
+        paddingHorizontal: 14,
+    },
+    quickChipLabel: {
+        color: theme.colors.text,
+        fontFamily: theme.fonts.bold,
+        fontSize: 12,
+        writingDirection: 'rtl',
+    },
+
     /* --- Sections --- */
     sectionSpacer: {
-        marginBottom: 12,
-        marginTop: 28,
+        marginBottom: 14,
+        marginTop: 30,
     },
     grid: {
         flexDirection: 'row',
@@ -517,14 +364,14 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.surface,
         borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.lg,
-        borderWidth: 1,
-        minHeight: 130,
+        minHeight: 132,
         padding: 14,
         width: cardWidth,
     },
     aiCard: {
-        backgroundColor: theme.colors.primarySoft,
+        backgroundColor: theme.colors.surface,
         borderColor: theme.colors.borderBrand,
+        borderWidth: 1,
     },
     toolIconBox: {
         alignItems: 'center',
@@ -536,13 +383,13 @@ const styles = StyleSheet.create({
         width: 40,
     },
     aiIconBox: {
-        backgroundColor: theme.colors.surface,
+        backgroundColor: theme.colors.primarySoft,
     },
     toolName: {
         color: theme.colors.text,
         fontFamily: theme.fonts.black,
         fontSize: 14,
-        textAlign: RTL_ALIGN,
+        textAlign: 'right',
         writingDirection: 'rtl',
     },
     toolDesc: {
@@ -551,7 +398,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         lineHeight: 18,
         marginTop: 4,
-        textAlign: RTL_ALIGN,
+        textAlign: 'right',
         writingDirection: 'rtl',
     },
 
@@ -561,8 +408,6 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.surface,
         borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.lg,
-        borderWidth: 1,
-        flexDirection: 'row',
         gap: 14,
         marginHorizontal: 20,
         marginTop: 24,
@@ -572,9 +417,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: theme.colors.primarySoft,
         borderRadius: theme.radius.full,
-        height: 36,
+        height: 38,
         justifyContent: 'center',
-        width: 36,
+        width: 38,
     },
     privacyText: {
         flex: 1,
@@ -583,7 +428,7 @@ const styles = StyleSheet.create({
         color: theme.colors.text,
         fontFamily: theme.fonts.black,
         fontSize: 13,
-        textAlign: RTL_ALIGN,
+        textAlign: 'right',
         writingDirection: 'rtl',
     },
     privacySub: {
@@ -592,7 +437,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         lineHeight: 18,
         marginTop: 2,
-        textAlign: RTL_ALIGN,
+        textAlign: 'right',
         writingDirection: 'rtl',
     },
 });

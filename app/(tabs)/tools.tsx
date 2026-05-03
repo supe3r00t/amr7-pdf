@@ -19,6 +19,7 @@ import { ALL_TOOLS, CATEGORIES } from '@/constants/tools';
 import { ToolIcon } from '@/components/tool-icon';
 import { PremiumPressable } from '@/components/premium-pressable';
 import { AppHeader, Chip } from '@/components/premium-ui';
+import { ScreenBackground } from '@/components/screen-background';
 
 const { width } = Dimensions.get('window');
 const GRID_GAP = 12;
@@ -59,7 +60,7 @@ export default function ToolsScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <ScreenBackground>
             <AppHeader
                 eyebrow="مكتبة الأدوات"
                 title="كل أدواتك في مكان واحد"
@@ -159,12 +160,11 @@ export default function ToolsScreen() {
                     </PremiumPressable>
                 )}
             />
-        </View>
+        </ScreenBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { backgroundColor: theme.colors.background, flex: 1 },
 
     searchWrap: {
         alignItems: 'center',
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
         borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.md,
         borderWidth: 1,
-        flexDirection: 'row',
+        flexDirection: I18nManager.isRTL ? 'row' : 'row-reverse',
         gap: 10,
         height: 48,
         marginHorizontal: 20,
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
         marginTop: 18,
     },
     countText: {
-        color: theme.colors.textMuted,
+        color: theme.colors.textOnDarkMuted,
         fontFamily: theme.fonts.bold,
         fontSize: 12,
         textAlign: RTL_ALIGN,
@@ -284,13 +284,13 @@ const styles = StyleSheet.create({
         width: 72,
     },
     emptyTitle: {
-        color: theme.colors.text,
+        color: theme.colors.textOnDark,
         fontFamily: theme.fonts.black,
         fontSize: 16,
         textAlign: 'center',
     },
     emptySub: {
-        color: theme.colors.textMuted,
+        color: theme.colors.textOnDarkMuted,
         fontFamily: theme.fonts.medium,
         fontSize: 13,
         marginTop: 6,
