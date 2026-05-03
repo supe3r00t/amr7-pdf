@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
-import type { ImageSourcePropType, PressableProps, StyleProp, TextStyle, ViewStyle } from 'react-native';
-import { I18nManager, Image, StyleSheet, Text, View } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { PressableProps, StyleProp, TextStyle, ViewStyle } from 'react-native';
+import { I18nManager, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PremiumPressable } from '@/components/premium-pressable';
 import { theme } from '@/constants/theme';
+
+const RTL_ALIGN: TextStyle['textAlign'] = I18nManager.isRTL ? 'right' : 'left';
 
 type PremiumCardProps = {
     children: ReactNode;
@@ -21,14 +23,28 @@ type PremiumButtonProps = PressableProps & {
 
 type AppHeaderProps = {
     title: string;
-    eyebrow?: string;
     subtitle?: string;
+    eyebrow?: string;
     icon?: string;
-    logoSource?: ImageSourcePropType;
     trailing?: ReactNode;
+    showBack?: boolean;
+    onBack?: () => void;
     children?: ReactNode;
-    compact?: boolean;
     style?: StyleProp<ViewStyle>;
+};
+
+type SectionHeaderProps = {
+    title: string;
+    actionLabel?: string;
+    onAction?: () => void;
+    style?: StyleProp<ViewStyle>;
+};
+
+type ChipProps = {
+    label: string;
+    active?: boolean;
+    onPress?: () => void;
+    icon?: string;
 };
 
 export function PremiumCard({ children, style }: PremiumCardProps) {
@@ -64,8 +80,8 @@ export function PremiumButton({
             {icon && (
                 <MaterialCommunityIcons
                     name={icon as any}
-                    size={20}
-                    color={isPrimary ? theme.colors.white : theme.colors.primaryDark}
+                    size={18}
+                    color={isPrimary ? theme.colors.white : theme.colors.primary}
                 />
             )}
             <Text
@@ -83,13 +99,13 @@ export function PremiumButton({
 
 export function AppHeader({
     title,
-    eyebrow,
     subtitle,
+    eyebrow,
     icon,
-    logoSource,
     trailing,
+    showBack,
+    onBack,
     children,
-    compact,
     style,
 }: AppHeaderProps) {
     const insets = useSafeAreaInsets();
@@ -99,29 +115,30 @@ export function AppHeader({
             style={[
                 styles.header,
                 {
-                    paddingTop: Math.max(insets.top, 20) + (compact ? 12 : 18),
-                    paddingBottom: compact ? 20 : 26,
+                    paddingTop: Math.max(insets.top, 12) + 8,
                 },
                 style,
             ]}
         >
-            <View style={styles.headerAccent} />
-            <View style={styles.headerTop}>
+            <View style={styles.headerRow}>
+                {showBack && (
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={onBack}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                        <Ionicons
+                            name={I18nManager.isRTL ? 'chevron-forward' : 'chevron-back'}
+                            size={22}
+                            color={theme.colors.text}
+                        />
+                    </TouchableOpacity>
+                )}
+
                 <View style={styles.headerCopy}>
-                    {eyebrow && (
-                        <View style={styles.eyebrowPill}>
-                            <MaterialCommunityIcons name="shield-check-outline" size={13} color={theme.colors.accent} />
-                            <Text style={styles.eyebrowText}>{eyebrow}</Text>
-                        </View>
-                    )}
-
-                    {logoSource ? (
-                        <Image source={logoSource} style={styles.headerLogo} resizeMode="contain" />
-                    ) : (
-                        <Text style={styles.headerTitle}>{title}</Text>
-                    )}
-
-                    {logoSource && <Text style={styles.headerTitleCompact}>{title}</Text>}
+                    {eyebrow && <Text style={styles.eyebrow}>{eyebrow}</Text>}
+                    <Text style={styles.headerTitle}>{title}</Text>
                     {subtitle && <Text style={styles.headerSubtitle}>{subtitle}</Text>}
                 </View>
 
@@ -129,12 +146,54 @@ export function AppHeader({
                     trailing
                 ) : icon ? (
                     <View style={styles.headerIconBox}>
-                        <MaterialCommunityIcons name={icon as any} size={28} color={theme.colors.accent} />
+                        <MaterialCommunityIcons
+                            name={icon as any}
+                            size={20}
+                            color={theme.colors.primary}
+                        />
                     </View>
                 ) : null}
             </View>
-            {children}
+
+            {children && <View style={styles.headerChildren}>{children}</View>}
         </View>
+    );
+}
+
+export function SectionHeader({ title, actionLabel, onAction, style }: SectionHeaderProps) {
+    return (
+        <View style={[styles.sectionHeader, style]}>
+            <Text style={styles.sectionTitle}>{title}</Text>
+            {actionLabel && (
+                <TouchableOpacity onPress={onAction} activeOpacity={0.7} style={styles.sectionAction}>
+                    <Text style={styles.sectionActionText}>{actionLabel}</Text>
+                    <Ionicons
+                        name={I18nManager.isRTL ? 'chevron-back' : 'chevron-forward'}
+                        size={14}
+                        color={theme.colors.primary}
+                    />
+                </TouchableOpacity>
+            )}
+        </View>
+    );
+}
+
+export function Chip({ label, active, onPress, icon }: ChipProps) {
+    return (
+        <TouchableOpacity
+            style={[styles.chip, active && styles.chipActive]}
+            onPress={onPress}
+            activeOpacity={0.8}
+        >
+            {icon && (
+                <MaterialCommunityIcons
+                    name={icon as any}
+                    size={14}
+                    color={active ? theme.colors.white : theme.colors.textSecondary}
+                />
+            )}
+            <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+        </TouchableOpacity>
     );
 }
 
@@ -148,21 +207,21 @@ const styles = StyleSheet.create({
     },
     button: {
         alignItems: 'center',
-        borderRadius: 18,
+        borderRadius: theme.radius.md,
         flexDirection: 'row',
-        gap: 9,
+        gap: 8,
         justifyContent: 'center',
-        minHeight: 54,
+        minHeight: 50,
         paddingHorizontal: 18,
-        paddingVertical: 15,
+        paddingVertical: 14,
     },
     buttonPrimary: {
         backgroundColor: theme.colors.primary,
-        ...theme.shadow.md,
+        ...theme.shadow.sm,
     },
     buttonSecondary: {
         backgroundColor: theme.colors.primarySoft,
-        borderColor: theme.colors.primaryLight,
+        borderColor: theme.colors.borderBrand,
         borderWidth: 1,
     },
     buttonGhost: {
@@ -171,101 +230,119 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     buttonDisabled: {
-        opacity: 0.65,
+        opacity: 0.55,
     },
     buttonText: {
-        fontFamily: theme.fonts.black,
-        fontSize: 15,
+        ...theme.type.button,
         textAlign: 'center',
     },
     buttonTextPrimary: {
         color: theme.colors.white,
     },
     buttonTextSecondary: {
-        color: theme.colors.primaryDark,
+        color: theme.colors.primary,
     },
+
+    /* --- Header --- */
     header: {
-        backgroundColor: theme.colors.brandDeep,
-        borderColor: 'rgba(255,255,255,0.10)',
-        borderRadius: 28,
-        borderWidth: 1,
-        marginHorizontal: 14,
-        marginTop: 8,
-        overflow: 'hidden',
+        backgroundColor: theme.colors.background,
+        paddingBottom: 16,
         paddingHorizontal: 20,
-        ...theme.shadow.lg,
     },
-    headerAccent: {
-        backgroundColor: theme.colors.primary,
-        height: 3,
-        left: 20,
-        position: 'absolute',
-        right: 20,
-        top: 0,
-    },
-    headerTop: {
+    headerRow: {
         alignItems: 'center',
         flexDirection: 'row',
-        gap: 14,
-        justifyContent: 'space-between',
+        gap: 12,
+    },
+    backButton: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.full,
+        borderWidth: 1,
+        height: 38,
+        justifyContent: 'center',
+        width: 38,
     },
     headerCopy: {
         alignItems: 'flex-start',
         flex: 1,
     },
-    eyebrowPill: {
+    eyebrow: {
+        ...theme.type.eyebrow,
+        color: theme.colors.primary,
+        marginBottom: 4,
+        textAlign: RTL_ALIGN,
+    },
+    headerTitle: {
+        ...theme.type.h1,
+        color: theme.colors.text,
+        textAlign: RTL_ALIGN,
+    },
+    headerSubtitle: {
+        ...theme.type.body,
+        color: theme.colors.textMuted,
+        marginTop: 4,
+        textAlign: RTL_ALIGN,
+    },
+    headerIconBox: {
         alignItems: 'center',
-        alignSelf: 'flex-start',
-        backgroundColor: 'rgba(255,255,255,0.10)',
-        borderColor: 'rgba(255,255,255,0.14)',
+        backgroundColor: theme.colors.primarySoft,
+        borderColor: theme.colors.borderBrand,
+        borderRadius: theme.radius.full,
+        borderWidth: 1,
+        height: 40,
+        justifyContent: 'center',
+        width: 40,
+    },
+    headerChildren: {
+        marginTop: 16,
+    },
+
+    /* --- Section header --- */
+    sectionHeader: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+    },
+    sectionTitle: {
+        ...theme.type.h3,
+        color: theme.colors.text,
+        textAlign: RTL_ALIGN,
+    },
+    sectionAction: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: 4,
+    },
+    sectionActionText: {
+        ...theme.type.captionStrong,
+        color: theme.colors.primary,
+    },
+
+    /* --- Chip --- */
+    chip: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.full,
         borderWidth: 1,
         flexDirection: 'row',
         gap: 6,
-        marginBottom: 12,
-        paddingHorizontal: 11,
-        paddingVertical: 5,
-    },
-    eyebrowText: {
-        color: theme.colors.heroText,
-        fontFamily: theme.fonts.bold,
-        fontSize: 12,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    headerLogo: {
-        height: 48,
-        marginBottom: 10,
-        width: 160,
-    },
-    headerTitle: {
-        color: theme.colors.white,
-        fontFamily: theme.fonts.black,
-        fontSize: 28,
-        lineHeight: 36,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    headerTitleCompact: {
-        color: theme.colors.white,
-        fontFamily: theme.fonts.black,
-        fontSize: 18,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    headerSubtitle: {
-        color: 'rgba(232,236,239,0.78)',
-        fontFamily: theme.fonts.medium,
-        fontSize: 14,
-        lineHeight: 23,
-        marginTop: 8,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    headerIconBox: {
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.10)',
-        borderColor: 'rgba(255,255,255,0.14)',
-        borderRadius: 18,
-        borderWidth: 1,
-        height: 56,
+        height: 36,
         justifyContent: 'center',
-        width: 56,
+        paddingHorizontal: 16,
+    },
+    chipActive: {
+        backgroundColor: theme.colors.primary,
+        borderColor: theme.colors.primary,
+    },
+    chipText: {
+        ...theme.type.captionStrong,
+        color: theme.colors.textSecondary,
+    },
+    chipTextActive: {
+        color: theme.colors.white,
     },
 });

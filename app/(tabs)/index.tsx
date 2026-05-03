@@ -3,12 +3,9 @@ import {
     Animated,
     Dimensions,
     I18nManager,
-    Image,
-    Linking,
     ScrollView,
     StyleSheet,
     Text,
-    TouchableOpacity,
     View,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -17,520 +14,441 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { PremiumPressable } from '@/components/premium-pressable';
 import { ToolIcon } from '@/components/tool-icon';
+import { SectionHeader } from '@/components/premium-ui';
 import { theme } from '@/constants/theme';
 import { ALL_TOOLS, HOME_AI_IDS, HOME_PDF_IDS } from '@/constants/tools';
 
 const { width } = Dimensions.get('window');
-const cardWidth = (width - 52) / 2;
+const GRID_GAP = 12;
+const GRID_HORIZONTAL_PADDING = 20;
+const cardWidth = (width - GRID_HORIZONTAL_PADDING * 2 - GRID_GAP) / 2;
+
+const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
+
+const QUICK_ACTIONS = [
+    { id: 'merge', label: 'دمج', icon: 'set-merge' },
+    { id: 'compress', label: 'ضغط', icon: 'archive-arrow-down-outline' },
+    { id: 'pdf-to-jpg', label: 'تحويل', icon: 'file-image-outline' },
+    { id: 'ai-summarize', label: 'تلخيص', icon: 'text-box-search-outline' },
+];
 
 export default function HomeScreen() {
     const insets = useSafeAreaInsets();
     const quickPDF = ALL_TOOLS.filter((tool) => HOME_PDF_IDS.includes(tool.id));
     const quickAI = ALL_TOOLS.filter((tool) => HOME_AI_IDS.includes(tool.id));
-    const heroOpacity = useRef(new Animated.Value(0)).current;
-    const heroTranslate = useRef(new Animated.Value(18)).current;
+    const fadeIn = useRef(new Animated.Value(0)).current;
+    const slideUp = useRef(new Animated.Value(12)).current;
 
     useEffect(() => {
         Animated.parallel([
-            Animated.timing(heroOpacity, {
+            Animated.timing(fadeIn, {
                 toValue: 1,
-                duration: 520,
+                duration: 420,
                 useNativeDriver: true,
             }),
-            Animated.spring(heroTranslate, {
+            Animated.spring(slideUp, {
                 toValue: 0,
                 useNativeDriver: true,
-                speed: 12,
-                bounciness: 5,
+                speed: 14,
+                bounciness: 4,
             }),
         ]).start();
-    }, [heroOpacity, heroTranslate]);
+    }, [fadeIn, slideUp]);
 
     const handlePress = (path: string) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.selectionAsync();
         router.push(path as never);
     };
 
-    const handleLink = async (url: string) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        await Linking.openURL(url);
-    };
-
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 48 }]}
-            showsVerticalScrollIndicator={false}
-        >
-            <Animated.View
-                style={[
-                    styles.header,
-                    {
-                        paddingTop: Math.max(insets.top, 20) + 16,
-                        opacity: heroOpacity,
-                        transform: [{ translateY: heroTranslate }],
-                    },
-                ]}
+        <View style={styles.container}>
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
+                showsVerticalScrollIndicator={false}
             >
-                <View style={styles.headerAccent} />
-
-                <View style={styles.logoContainer}>
-                    <Image
-                        source={require('@/assets/images/logo-new.png')}
-                        style={styles.logo}
-                        resizeMode="contain"
-                    />
-                </View>
-
-                <View style={styles.headerTitles}>
-                    <View style={styles.taglineBox}>
-                        <MaterialCommunityIcons name="shield-check-outline" size={14} color={theme.colors.accent} />
-                        <Text style={styles.tagline}>منصة عربية لأدوات PDF والإنتاجية</Text>
-                    </View>
-                    <Text style={styles.title}>جميع الأدوات التي تحتاجها{'\n'}في مكان واحد</Text>
-                    <Text style={styles.subtitle}>
-                        واجهة فاخرة، أدوات عملية، وتجربة آمنة مصممة لتنجز من جوالك بسرعة ووضوح.
-                    </Text>
-                </View>
-
-                <View style={styles.heroButtons}>
-                    <PremiumPressable style={styles.btnPrimary} onPress={() => handlePress('/tools')}>
-                        <Text style={styles.btnPrimaryText}>ابدأ الآن</Text>
-                        <MaterialCommunityIcons
-                            name={I18nManager.isRTL ? 'arrow-left' : 'arrow-right'}
-                            size={18}
-                            color="#fff"
-                        />
-                    </PremiumPressable>
-
-                    <PremiumPressable style={styles.btnSecondary} onPress={() => handleLink('https://amr-7.sa')}>
-                        <Text style={styles.btnSecondaryText}>حلول المؤسسات</Text>
-                        <MaterialCommunityIcons name="domain" size={18} color={theme.colors.heroText} />
-                    </PremiumPressable>
-                </View>
-            </Animated.View>
-
-            <View style={styles.statsRow}>
-                {[
-                    { num: `${ALL_TOOLS.length}+`, label: 'أداة متاحة', icon: 'toolbox-outline' },
-                    { num: 'RTL', label: 'تجربة عربية', icon: 'translate' },
-                    { num: 'آمن', label: 'معالجة موثوقة', icon: 'shield-lock-outline' },
-                ].map((stat) => (
-                    <View key={stat.label} style={styles.statCard}>
-                        <MaterialCommunityIcons
-                            name={stat.icon as any}
-                            size={20}
-                            color={theme.colors.primaryLight}
-                            style={styles.statIconBg}
-                        />
-                        <Text style={styles.statNum}>{stat.num}</Text>
-                        <Text style={styles.statLabel}>{stat.label}</Text>
-                    </View>
-                ))}
-            </View>
-
-            <View style={styles.banner}>
-                <View style={styles.bannerIconBox}>
-                    <MaterialCommunityIcons name="shield-check" size={28} color={theme.colors.success} />
-                </View>
-                <View style={styles.bannerText}>
-                    <Text style={styles.bannerTitle}>الخصوصية أولاً: أمان تام لمستنداتك</Text>
-                    <Text style={styles.bannerSub}>تتم المعالجة في بيئة مشفرة وتُحذف ملفاتك تلقائياً.</Text>
-                </View>
-            </View>
-
-            <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>الأكثر استخداماً</Text>
-                <TouchableOpacity onPress={() => handlePress('/tools')} activeOpacity={0.7} style={styles.seeAllBtn}>
-                    <Text style={styles.seeAll}>عرض الكل</Text>
-                    <Ionicons
-                        name={I18nManager.isRTL ? 'chevron-back' : 'chevron-forward'}
-                        size={14}
-                        color={theme.colors.primary}
-                    />
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.grid}>
-                {quickPDF.map((tool) => (
-                    <PremiumPressable
-                        key={tool.id}
-                        style={styles.toolCard}
-                        onPress={() => handlePress(`/tool/${tool.id}`)}
-                    >
-                        <View style={styles.toolIconBox}>
-                            <ToolIcon tool={tool} size={24} />
-                        </View>
-                        <Text style={styles.toolName} numberOfLines={2}>
-                            {tool.name}
-                        </Text>
-                        <Text style={styles.toolDesc} numberOfLines={2}>
-                            {tool.description}
-                        </Text>
-                    </PremiumPressable>
-                ))}
-            </View>
-
-            <View style={styles.sectionHeader}>
-                <View style={styles.sectionTitleRow}>
-                    <Text style={styles.sectionTitle}>المساعد الذكي (AI)</Text>
-                    <Ionicons name="sparkles" size={20} color={theme.colors.warning} />
-                </View>
-                <TouchableOpacity onPress={() => handlePress('/ai')} activeOpacity={0.7} style={styles.seeAllBtn}>
-                    <Text style={styles.seeAll}>عرض الكل</Text>
-                    <Ionicons
-                        name={I18nManager.isRTL ? 'chevron-back' : 'chevron-forward'}
-                        size={14}
-                        color={theme.colors.primary}
-                    />
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.grid}>
-                {quickAI.map((tool) => (
-                    <PremiumPressable
-                        key={tool.id}
-                        style={[styles.toolCard, styles.aiCard]}
-                        onPress={() => handlePress(`/tool/${tool.id}`)}
-                    >
-                        <View style={[styles.toolIconBox, styles.aiIconBox]}>
-                            <ToolIcon tool={tool} size={24} />
-                            <View style={styles.aiBadgeSmall}>
-                                <Ionicons name="sparkles" size={8} color="#fff" />
+                <Animated.View
+                    style={[
+                        styles.headerWrap,
+                        {
+                            paddingTop: Math.max(insets.top, 12) + 8,
+                            opacity: fadeIn,
+                            transform: [{ translateY: slideUp }],
+                        },
+                    ]}
+                >
+                    <View style={styles.headerTop}>
+                        <View style={styles.brandRow}>
+                            <View style={styles.brandMark}>
+                                <Text style={styles.brandMarkText}>7</Text>
+                            </View>
+                            <View>
+                                <Text style={styles.brandTitle}>آمر 7</Text>
+                                <Text style={styles.brandSubtitle}>منصة الإنتاجية الذكية</Text>
                             </View>
                         </View>
-                        <Text style={styles.toolName} numberOfLines={2}>
-                            {tool.name}
-                        </Text>
-                        <Text style={styles.toolDesc} numberOfLines={2}>
-                            {tool.description}
-                        </Text>
-                    </PremiumPressable>
-                ))}
-            </View>
+                        <PremiumPressable
+                            style={styles.helpButton}
+                            onPress={() => handlePress('/support')}
+                        >
+                            <Ionicons name="headset-outline" size={20} color={theme.colors.text} />
+                        </PremiumPressable>
+                    </View>
 
-            <TouchableOpacity style={styles.supportBtn} onPress={() => handlePress('/support')} activeOpacity={0.8}>
-                <View style={styles.supportBtnContent}>
-                    <MaterialCommunityIcons name="headset" size={22} color={theme.colors.text} />
-                    <Text style={styles.supportText}>مركز المساعدة والدعم</Text>
+                    <View style={styles.greeting}>
+                        <Text style={styles.greetingHi}>أهلاً بك 👋</Text>
+                        <Text style={styles.greetingTitle}>أنجز مهام مستنداتك بسرعة وأمان</Text>
+                    </View>
+                </Animated.View>
+
+                <View style={styles.quickActionsRow}>
+                    {QUICK_ACTIONS.map((action) => (
+                        <PremiumPressable
+                            key={action.id}
+                            style={styles.quickAction}
+                            onPress={() => handlePress(`/tool/${action.id}`)}
+                        >
+                            <View style={styles.quickActionIcon}>
+                                <MaterialCommunityIcons
+                                    name={action.icon as any}
+                                    size={22}
+                                    color={theme.colors.primary}
+                                />
+                            </View>
+                            <Text style={styles.quickActionLabel}>{action.label}</Text>
+                        </PremiumPressable>
+                    ))}
                 </View>
-                <Ionicons
-                    name={I18nManager.isRTL ? 'chevron-back' : 'chevron-forward'}
-                    size={18}
-                    color={theme.colors.textMuted}
-                />
-            </TouchableOpacity>
-        </ScrollView>
+
+                <View style={styles.metaCard}>
+                    <View style={styles.metaItem}>
+                        <Text style={styles.metaNum}>{ALL_TOOLS.length}+</Text>
+                        <Text style={styles.metaLabel}>أداة متاحة</Text>
+                    </View>
+                    <View style={styles.metaDivider} />
+                    <View style={styles.metaItem}>
+                        <Text style={styles.metaNum}>RTL</Text>
+                        <Text style={styles.metaLabel}>تجربة عربية</Text>
+                    </View>
+                    <View style={styles.metaDivider} />
+                    <View style={styles.metaItem}>
+                        <View style={styles.metaIconRow}>
+                            <Ionicons name="shield-checkmark" size={18} color={theme.colors.primary} />
+                        </View>
+                        <Text style={styles.metaLabel}>معالجة آمنة</Text>
+                    </View>
+                </View>
+
+                <View style={styles.sectionSpacer}>
+                    <SectionHeader
+                        title="الأكثر استخداماً"
+                        actionLabel="عرض الكل"
+                        onAction={() => handlePress('/tools')}
+                    />
+                </View>
+
+                <View style={styles.grid}>
+                    {quickPDF.map((tool) => (
+                        <PremiumPressable
+                            key={tool.id}
+                            style={styles.toolCard}
+                            onPress={() => handlePress(`/tool/${tool.id}`)}
+                        >
+                            <View style={styles.toolIconBox}>
+                                <ToolIcon tool={tool} size={22} />
+                            </View>
+                            <Text style={styles.toolName} numberOfLines={1}>
+                                {tool.name}
+                            </Text>
+                            <Text style={styles.toolDesc} numberOfLines={2}>
+                                {tool.description}
+                            </Text>
+                        </PremiumPressable>
+                    ))}
+                </View>
+
+                <View style={styles.sectionSpacer}>
+                    <SectionHeader
+                        title="المساعد الذكي"
+                        actionLabel="عرض الكل"
+                        onAction={() => handlePress('/ai')}
+                    />
+                </View>
+
+                <View style={styles.grid}>
+                    {quickAI.map((tool) => (
+                        <PremiumPressable
+                            key={tool.id}
+                            style={[styles.toolCard, styles.aiCard]}
+                            onPress={() => handlePress(`/tool/${tool.id}`)}
+                        >
+                            <View style={[styles.toolIconBox, styles.aiIconBox]}>
+                                <ToolIcon tool={tool} size={22} />
+                            </View>
+                            <Text style={styles.toolName} numberOfLines={1}>
+                                {tool.name}
+                            </Text>
+                            <Text style={styles.toolDesc} numberOfLines={2}>
+                                {tool.description}
+                            </Text>
+                        </PremiumPressable>
+                    ))}
+                </View>
+
+                <PremiumPressable
+                    style={styles.privacyBanner}
+                    onPress={() => handlePress('/about')}
+                >
+                    <View style={styles.privacyIcon}>
+                        <Ionicons name="lock-closed" size={18} color={theme.colors.primary} />
+                    </View>
+                    <View style={styles.privacyText}>
+                        <Text style={styles.privacyTitle}>خصوصيتك أولوية</Text>
+                        <Text style={styles.privacySub}>
+                            معالجة مشفّرة وحذف تلقائي للملفات بعد الانتهاء.
+                        </Text>
+                    </View>
+                    <Ionicons
+                        name={I18nManager.isRTL ? 'chevron-back' : 'chevron-forward'}
+                        size={16}
+                        color={theme.colors.textMuted}
+                    />
+                </PremiumPressable>
+            </ScrollView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
         backgroundColor: theme.colors.background,
+        flex: 1,
     },
     content: {
-        paddingBottom: 48,
+        paddingBottom: 32,
     },
-    header: {
-        alignItems: 'center',
-        backgroundColor: theme.colors.brandDeep,
-        borderColor: 'rgba(255,255,255,0.10)',
-        borderRadius: 28,
-        borderWidth: 1,
-        marginHorizontal: 14,
-        marginTop: 8,
-        overflow: 'hidden',
-        paddingBottom: 36,
+
+    /* --- Header --- */
+    headerWrap: {
         paddingHorizontal: 20,
-        ...theme.shadow.lg,
+        paddingBottom: 20,
     },
-    headerAccent: {
-        position: 'absolute',
-        top: 0,
-        left: 20,
-        right: 20,
-        height: 3,
-        backgroundColor: theme.colors.primary,
-    },
-    logoContainer: {
-        width: '100%',
-        alignItems: 'flex-start',
-        marginBottom: 18,
-    },
-    logo: {
-        width: 178,
-        height: 54,
-    },
-    headerTitles: {
-        width: '100%',
-        alignItems: 'flex-start',
-    },
-    taglineBox: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.10)',
-        borderRadius: theme.radius.full,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.14)',
-        gap: 6,
-        marginBottom: 12,
-        paddingHorizontal: 12,
-        paddingVertical: 5,
-    },
-    tagline: {
-        color: theme.colors.heroText,
-        fontFamily: theme.fonts.bold,
-        fontSize: 12,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    title: {
-        color: theme.colors.white,
-        fontFamily: theme.fonts.black,
-        fontSize: 31,
-        lineHeight: 39,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    subtitle: {
-        color: 'rgba(239,255,253,0.76)',
-        fontFamily: theme.fonts.medium,
-        fontSize: 15,
-        lineHeight: 26,
-        marginTop: 12,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    heroButtons: {
-        alignSelf: 'stretch',
-        flexDirection: 'row',
-        gap: 12,
-        marginTop: 28,
-    },
-    btnPrimary: {
-        flex: 1.5,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: theme.colors.primary,
-        borderRadius: 16,
-        gap: 8,
-        paddingVertical: 15,
-        ...theme.shadow.sm,
-    },
-    btnPrimaryText: {
-        color: '#fff',
-        fontFamily: theme.fonts.bold,
-        fontSize: 15,
-    },
-    btnSecondary: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(255,255,255,0.10)',
-        borderColor: 'rgba(255,255,255,0.20)',
-        borderRadius: 16,
-        borderWidth: 1,
-        gap: 8,
-        paddingVertical: 15,
-    },
-    btnSecondaryText: {
-        color: theme.colors.heroText,
-        fontFamily: theme.fonts.bold,
-        fontSize: 15,
-    },
-    statsRow: {
-        flexDirection: 'row',
-        gap: 10,
-        marginTop: -16,
-        paddingHorizontal: 20,
-        zIndex: 10,
-    },
-    statCard: {
-        flex: 1,
-        alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.borderLight,
-        borderRadius: 18,
-        borderWidth: 1,
-        overflow: 'hidden',
-        paddingVertical: 18,
-        position: 'relative',
-        ...theme.shadow.sm,
-    },
-    statIconBg: {
-        position: 'absolute',
-        top: -5,
-        right: -5,
-        opacity: 0.4,
-        transform: [{ scale: 2 }],
-    },
-    statNum: {
-        color: theme.colors.text,
-        fontFamily: theme.fonts.black,
-        fontSize: 22,
-        textAlign: 'center',
-    },
-    statLabel: {
-        color: theme.colors.textMuted,
-        fontFamily: theme.fonts.medium,
-        fontSize: 11,
-        marginTop: 4,
-        textAlign: 'center',
-    },
-    banner: {
-        alignItems: 'center',
-        backgroundColor: theme.colors.brandDeep,
-        borderColor: 'rgba(31,167,162,0.20)',
-        borderRadius: theme.radius.lg,
-        borderWidth: 1,
-        flexDirection: 'row',
-        gap: 16,
-        marginHorizontal: 20,
-        marginTop: 24,
-        padding: 16,
-    },
-    bannerIconBox: {
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.10)',
-        borderRadius: theme.radius.full,
-        height: 48,
-        justifyContent: 'center',
-        width: 48,
-        ...theme.shadow.sm,
-    },
-    bannerText: {
-        flex: 1,
-        alignItems: 'flex-start',
-    },
-    bannerTitle: {
-        color: theme.colors.white,
-        fontFamily: theme.fonts.black,
-        fontSize: 14,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    bannerSub: {
-        color: 'rgba(239,255,253,0.72)',
-        fontFamily: theme.fonts.regular,
-        fontSize: 12,
-        marginTop: 4,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    sectionHeader: {
+    headerTop: {
         alignItems: 'center',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 16,
-        marginTop: 32,
+    },
+    brandRow: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: 12,
+    },
+    brandMark: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.primaryDark,
+        borderRadius: 12,
+        height: 40,
+        justifyContent: 'center',
+        width: 40,
+    },
+    brandMarkText: {
+        color: theme.colors.primaryLight,
+        fontFamily: theme.fonts.black,
+        fontSize: 20,
+        marginTop: -2,
+    },
+    brandTitle: {
+        color: theme.colors.text,
+        fontFamily: theme.fonts.black,
+        fontSize: 17,
+        textAlign: RTL_ALIGN,
+    },
+    brandSubtitle: {
+        color: theme.colors.textMuted,
+        fontFamily: theme.fonts.medium,
+        fontSize: 11,
+        textAlign: RTL_ALIGN,
+    },
+    helpButton: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.full,
+        borderWidth: 1,
+        height: 40,
+        justifyContent: 'center',
+        width: 40,
+    },
+    greeting: {
+        marginTop: 24,
+    },
+    greetingHi: {
+        ...theme.type.title,
+        color: theme.colors.textMuted,
+        textAlign: RTL_ALIGN,
+    },
+    greetingTitle: {
+        ...theme.type.h1,
+        color: theme.colors.text,
+        marginTop: 4,
+        textAlign: RTL_ALIGN,
+    },
+
+    /* --- Quick actions --- */
+    quickActionsRow: {
+        flexDirection: 'row',
+        gap: 10,
         paddingHorizontal: 20,
     },
-    sectionTitleRow: {
-        flexDirection: 'row',
+    quickAction: {
         alignItems: 'center',
-        gap: 6,
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.lg,
+        borderWidth: 1,
+        flex: 1,
+        gap: 8,
+        paddingVertical: 14,
     },
-    sectionTitle: {
+    quickActionIcon: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.primarySoft,
+        borderRadius: theme.radius.full,
+        height: 38,
+        justifyContent: 'center',
+        width: 38,
+    },
+    quickActionLabel: {
+        ...theme.type.captionStrong,
+        color: theme.colors.text,
+    },
+
+    /* --- Meta card --- */
+    metaCard: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.lg,
+        borderWidth: 1,
+        flexDirection: 'row',
+        marginHorizontal: 20,
+        marginTop: 16,
+        paddingVertical: 16,
+    },
+    metaItem: {
+        alignItems: 'center',
+        flex: 1,
+        gap: 4,
+    },
+    metaIconRow: {
+        alignItems: 'center',
+        height: 22,
+        justifyContent: 'center',
+    },
+    metaNum: {
         color: theme.colors.text,
         fontFamily: theme.fonts.black,
         fontSize: 18,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
     },
-    seeAllBtn: {
-        alignItems: 'center',
-        flexDirection: 'row',
-        gap: 4,
+    metaLabel: {
+        color: theme.colors.textMuted,
+        fontFamily: theme.fonts.medium,
+        fontSize: 11,
     },
-    seeAll: {
-        color: theme.colors.primary,
-        fontFamily: theme.fonts.bold,
-        fontSize: 13,
+    metaDivider: {
+        backgroundColor: theme.colors.borderLight,
+        height: 28,
+        width: 1,
+    },
+
+    /* --- Sections --- */
+    sectionSpacer: {
+        marginTop: 28,
+        marginBottom: 12,
     },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: 10,
-        paddingHorizontal: 20,
+        gap: GRID_GAP,
+        paddingHorizontal: GRID_HORIZONTAL_PADDING,
     },
     toolCard: {
         alignItems: 'flex-start',
         backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.border,
-        borderRadius: 22,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.lg,
         borderWidth: 1,
-        justifyContent: 'flex-start',
-        minHeight: 154,
-        padding: 17,
+        minHeight: 130,
+        padding: 14,
         width: cardWidth,
-        ...theme.shadow.sm,
     },
     aiCard: {
-        borderColor: theme.colors.primaryLight,
-        backgroundColor: '#FBFEFF',
+        backgroundColor: theme.colors.primarySoft,
+        borderColor: theme.colors.borderBrand,
     },
     toolIconBox: {
         alignItems: 'center',
         backgroundColor: theme.colors.primarySoft,
-        borderColor: theme.colors.primaryLight,
-        borderRadius: 15,
-        borderWidth: 1,
-        height: 52,
+        borderRadius: theme.radius.md,
+        height: 40,
         justifyContent: 'center',
-        marginBottom: 12,
-        position: 'relative',
-        width: 52,
+        marginBottom: 10,
+        width: 40,
     },
     aiIconBox: {
-        backgroundColor: theme.colors.primarySoft,
-        borderColor: 'transparent',
-    },
-    aiBadgeSmall: {
-        position: 'absolute',
-        top: -6,
-        right: -6,
-        alignItems: 'center',
-        backgroundColor: theme.colors.warning,
-        borderColor: theme.colors.surface,
-        borderRadius: 8,
-        borderWidth: 2,
-        height: 16,
-        justifyContent: 'center',
-        width: 16,
+        backgroundColor: theme.colors.surface,
     },
     toolName: {
         color: theme.colors.text,
         fontFamily: theme.fonts.black,
         fontSize: 14,
-        lineHeight: 20,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
+        textAlign: RTL_ALIGN,
     },
     toolDesc: {
         color: theme.colors.textMuted,
         fontFamily: theme.fonts.medium,
         fontSize: 12,
         lineHeight: 18,
-        marginTop: 5,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
+        marginTop: 4,
+        textAlign: RTL_ALIGN,
     },
-    supportBtn: {
+
+    /* --- Privacy banner --- */
+    privacyBanner: {
         alignItems: 'center',
         backgroundColor: theme.colors.surface,
         borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.lg,
         borderWidth: 1,
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        gap: 14,
         marginHorizontal: 20,
-        marginTop: 32,
-        padding: 18,
-        ...theme.shadow.sm,
+        marginTop: 28,
+        padding: 16,
     },
-    supportBtnContent: {
+    privacyIcon: {
         alignItems: 'center',
-        flexDirection: 'row',
-        gap: 12,
+        backgroundColor: theme.colors.primarySoft,
+        borderRadius: theme.radius.full,
+        height: 36,
+        justifyContent: 'center',
+        width: 36,
     },
-    supportText: {
+    privacyText: {
+        flex: 1,
+    },
+    privacyTitle: {
         color: theme.colors.text,
-        fontFamily: theme.fonts.bold,
-        fontSize: 15,
+        fontFamily: theme.fonts.black,
+        fontSize: 13,
+        textAlign: RTL_ALIGN,
+    },
+    privacySub: {
+        color: theme.colors.textMuted,
+        fontFamily: theme.fonts.medium,
+        fontSize: 12,
+        lineHeight: 18,
+        marginTop: 2,
+        textAlign: RTL_ALIGN,
     },
 });

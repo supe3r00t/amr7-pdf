@@ -66,49 +66,62 @@ export type ThemeShadows = {
     lg: ViewStyle;
 };
 
+export type ThemeType = {
+    h1: TextStyle;
+    h2: TextStyle;
+    h3: TextStyle;
+    title: TextStyle;
+    body: TextStyle;
+    bodyStrong: TextStyle;
+    caption: TextStyle;
+    captionStrong: TextStyle;
+    eyebrow: TextStyle;
+    button: TextStyle;
+};
+
 const lightColors: ThemeColors = {
     primary: '#1FA7A2',
     primaryHover: '#188C88',
     primaryDark: '#0A2540',
     primaryMid: '#168D89',
     primaryLight: '#8EDCEF',
-    primarySoft: '#E8F8FB',
+    primarySoft: '#EAF8F8',
     accent: '#8EDCEF',
     brandDeep: '#0A2540',
     brandInk: '#061A2E',
     heroText: '#E8ECEF',
-    background: '#F5F7FA',
+    background: '#F6F8FB',
     surface: '#FFFFFF',
     card: '#FFFFFF',
-    surfaceAlt: '#EEF3F7',
-    text: '#10243A',
-    textSecondary: '#334155',
-    textMuted: '#64748B',
-    textPlaceholder: '#94A3B8',
-    border: '#DDE6EE',
-    borderLight: '#E7EDF3',
+    surfaceAlt: '#F1F4F8',
+    text: '#0A2540',
+    textSecondary: '#3A4A5C',
+    textMuted: '#6B7A8C',
+    textPlaceholder: '#9AA7B5',
+    border: '#E2E8EE',
+    borderLight: '#EEF2F6',
     borderFocus: 'rgba(31, 167, 162, 0.36)',
-    borderBrand: 'rgba(31, 167, 162, 0.24)',
-    success: '#22C55E',
-    successBg: '#ECFDF5',
+    borderBrand: 'rgba(31, 167, 162, 0.22)',
+    success: '#10B981',
+    successBg: '#E8F8F2',
     warning: '#F59E0B',
-    warningBg: '#FFFBEB',
+    warningBg: '#FFF6E5',
     danger: '#EF4444',
-    dangerBg: '#FEF2F2',
+    dangerBg: '#FEEDED',
     disabled: '#94A3B8',
     disabledBg: '#E2E8F0',
     white: '#FFFFFF',
-    overlay: 'rgba(16, 33, 43, 0.35)',
+    overlay: 'rgba(10, 37, 64, 0.32)',
 };
 
 const darkColors: ThemeColors = {
-    primary: '#14B8A6',
+    primary: '#1FA7A2',
     primaryHover: '#2DD4BF',
-    primaryDark: '#CCFBF1',
+    primaryDark: '#E8F8FB',
     primaryMid: '#0D9488',
     primaryLight: 'rgba(45, 212, 191, 0.24)',
     primarySoft: 'rgba(45, 212, 191, 0.13)',
-    accent: '#5EEAD4',
+    accent: '#8EDCEF',
     brandDeep: '#031F22',
     brandInk: '#061B24',
     heroText: '#EFFFFD',
@@ -146,9 +159,9 @@ const fonts: ThemeFonts = {
 const radius: ThemeRadii = {
     xs: 8,
     sm: 10,
-    md: 12,
-    lg: 16,
-    xl: 24,
+    md: 14,
+    lg: 18,
+    xl: 22,
     full: 999,
 };
 
@@ -163,26 +176,39 @@ const spacing: ThemeSpacing = {
 
 const shadow: ThemeShadows = {
     sm: {
-        shadowColor: lightColors.text,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.05,
-        shadowRadius: 16,
-        elevation: 2,
+        shadowColor: '#0A2540',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+        elevation: 1,
     },
     md: {
-        shadowColor: lightColors.brandDeep,
-        shadowOffset: { width: 0, height: 14 },
-        shadowOpacity: 0.10,
-        shadowRadius: 24,
-        elevation: 4,
+        shadowColor: '#0A2540',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.07,
+        shadowRadius: 20,
+        elevation: 3,
     },
     lg: {
-        shadowColor: lightColors.brandDeep,
-        shadowOffset: { width: 0, height: 20 },
-        shadowOpacity: 0.15,
-        shadowRadius: 34,
-        elevation: 8,
+        shadowColor: '#0A2540',
+        shadowOffset: { width: 0, height: 18 },
+        shadowOpacity: 0.10,
+        shadowRadius: 28,
+        elevation: 6,
     },
+};
+
+const type: ThemeType = {
+    h1: { fontFamily: fonts.black, fontSize: 26, lineHeight: 34 },
+    h2: { fontFamily: fonts.black, fontSize: 20, lineHeight: 28 },
+    h3: { fontFamily: fonts.black, fontSize: 17, lineHeight: 24 },
+    title: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 22 },
+    body: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 22 },
+    bodyStrong: { fontFamily: fonts.bold, fontSize: 14, lineHeight: 22 },
+    caption: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 18 },
+    captionStrong: { fontFamily: fonts.bold, fontSize: 12, lineHeight: 18 },
+    eyebrow: { fontFamily: fonts.bold, fontSize: 11, lineHeight: 16, letterSpacing: 0.4 },
+    button: { fontFamily: fonts.black, fontSize: 15, lineHeight: 20 },
 };
 
 export const theme = {
@@ -196,6 +222,7 @@ export const theme = {
     radius,
     spacing,
     shadow,
+    type,
 } as const;
 
 export const Colors = {

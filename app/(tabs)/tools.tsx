@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
 import {
-    View,
-    Text,
+    Dimensions,
     FlatList,
-    TouchableOpacity,
-    StyleSheet,
-    TextInput,
-    ScrollView,
     I18nManager,
     Keyboard,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -17,7 +18,13 @@ import { theme } from '@/constants/theme';
 import { ALL_TOOLS, CATEGORIES } from '@/constants/tools';
 import { ToolIcon } from '@/components/tool-icon';
 import { PremiumPressable } from '@/components/premium-pressable';
-import { AppHeader } from '@/components/premium-ui';
+import { AppHeader, Chip } from '@/components/premium-ui';
+
+const { width } = Dimensions.get('window');
+const GRID_GAP = 12;
+const GRID_PADDING = 20;
+const cardWidth = (width - GRID_PADDING * 2 - GRID_GAP) / 2;
+const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
 
 export default function ToolsScreen() {
     const [active, setActive] = useState<string>('all');
@@ -36,17 +43,17 @@ export default function ToolsScreen() {
     }, [active, search]);
 
     const handleCategoryPress = (catId: string) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.selectionAsync();
         setActive(catId);
     };
 
     const handleToolPress = (toolId: string) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/tool/${toolId}`);
     };
 
     const clearSearch = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.selectionAsync();
         setSearch('');
         Keyboard.dismiss();
     };
@@ -54,113 +61,101 @@ export default function ToolsScreen() {
     return (
         <View style={styles.container}>
             <AppHeader
-                eyebrow="مكتبة متكاملة لمعالجة الملفات"
-                title="مكتبة الأدوات"
-                compact
-                trailing={
-                    <View style={styles.countBadge}>
-                        <Text style={styles.countBadgeText}>{ALL_TOOLS.length}</Text>
-                        <MaterialCommunityIcons name="toolbox-outline" size={16} color={theme.colors.accent} />
-                    </View>
-                }
-            >
-                <View style={styles.searchWrap}>
-                    <Ionicons
-                        name="search-outline"
-                        size={20}
-                        color={search ? theme.colors.primary : theme.colors.textMuted}
-                    />
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="ابحث عن أداة، دمج، تعديل..."
-                        placeholderTextColor={theme.colors.textMuted}
-                        value={search}
-                        onChangeText={setSearch}
-                        textAlign={I18nManager.isRTL ? 'right' : 'left'}
-                        returnKeyType="search"
-                    />
-                    {search !== '' && (
-                        <TouchableOpacity onPress={clearSearch} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                            <Ionicons name="close-circle" size={20} color={theme.colors.textMuted} />
-                        </TouchableOpacity>
-                    )}
-                </View>
-            </AppHeader>
+                eyebrow="مكتبة الأدوات"
+                title="كل أدواتك في مكان واحد"
+                subtitle="ابحث، فلتر، وافتح الأداة بنقرة واحدة."
+            />
 
-            {/* --- Category Chips --- */}
+            <View style={styles.searchWrap}>
+                <Ionicons
+                    name="search-outline"
+                    size={20}
+                    color={search ? theme.colors.primary : theme.colors.textMuted}
+                />
+                <TextInput
+                    style={styles.searchInput}
+                    placeholder="ابحث عن أداة..."
+                    placeholderTextColor={theme.colors.textPlaceholder}
+                    value={search}
+                    onChangeText={setSearch}
+                    textAlign={RTL_ALIGN}
+                    returnKeyType="search"
+                />
+                {search !== '' && (
+                    <TouchableOpacity onPress={clearSearch} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                        <Ionicons name="close-circle" size={18} color={theme.colors.textMuted} />
+                    </TouchableOpacity>
+                )}
+            </View>
+
             <View style={styles.catWrap}>
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.catList}
                 >
-                    {CATEGORIES.map((cat) => {
-                        const isActive = active === cat.id;
-                        return (
-                            <TouchableOpacity
-                                key={cat.id}
-                                style={[styles.chip, isActive && styles.chipActive]}
-                                onPress={() => handleCategoryPress(cat.id)}
-                                activeOpacity={0.8}
-                            >
-                                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                                    {cat.name}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    })}
+                    {CATEGORIES.map((cat) => (
+                        <Chip
+                            key={cat.id}
+                            label={cat.name}
+                            active={active === cat.id}
+                            onPress={() => handleCategoryPress(cat.id)}
+                        />
+                    ))}
                 </ScrollView>
             </View>
 
-            <View style={styles.resultsHeader}>
-                <Text style={styles.countText}>
-                    {filtered.length > 0 ? `تم العثور على ${filtered.length} أداة` : 'لا توجد نتائج'}
-                </Text>
-            </View>
-
-            {/* --- Tools Grid --- */}
             <FlatList
                 data={filtered}
                 keyExtractor={(item) => item.id}
-                numColumns={1}
+                numColumns={2}
+                columnWrapperStyle={styles.row}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
                 keyboardDismissMode="on-drag"
+                ListHeaderComponent={
+                    <View style={styles.resultsHeader}>
+                        <Text style={styles.countText}>
+                            {filtered.length > 0 ? `${filtered.length} أداة` : 'لا توجد نتائج'}
+                        </Text>
+                    </View>
+                }
                 ListEmptyComponent={
                     <View style={styles.emptyState}>
-                        <MaterialCommunityIcons name="file-search-outline" size={64} color={theme.colors.border} />
-                        <Text style={styles.emptyTitle}>لم نجد أي أداة تطابق بحثك</Text>
-                        <Text style={styles.emptySub}>جرب البحث بكلمات مختلفة مثل دمج أو صور</Text>
+                        <View style={styles.emptyIcon}>
+                            <MaterialCommunityIcons
+                                name="file-search-outline"
+                                size={40}
+                                color={theme.colors.textMuted}
+                            />
+                        </View>
+                        <Text style={styles.emptyTitle}>لم نجد ما تبحث عنه</Text>
+                        <Text style={styles.emptySub}>جرّب كلمات مختلفة أو فئة أخرى.</Text>
                     </View>
                 }
                 renderItem={({ item }) => (
                     <PremiumPressable
-                        style={styles.card}
+                        style={[styles.card, { width: cardWidth }]}
                         onPress={() => handleToolPress(item.id)}
                     >
-                        <View style={styles.iconBox}>
-                            <ToolIcon tool={item} size={28} />
-                            {/* شارة صغيرة للأدوات الذكية */}
+                        <View style={styles.cardTop}>
+                            <View style={styles.iconBox}>
+                                <ToolIcon tool={item} size={20} />
+                            </View>
                             {item.category === 'ai' && (
-                                <View style={styles.aiBadge}>
-                                    <Ionicons name="sparkles" size={10} color="#fff" />
+                                <View style={styles.aiPill}>
+                                    <Ionicons name="sparkles" size={9} color={theme.colors.primary} />
+                                    <Text style={styles.aiPillText}>AI</Text>
                                 </View>
                             )}
                         </View>
-                        <View style={styles.cardText}>
-                            <Text style={styles.name} numberOfLines={1}>
-                                {item.name}
-                            </Text>
-                            <Text style={styles.desc} numberOfLines={2}>
-                                {item.description}
-                            </Text>
-                        </View>
-                        <Ionicons
-                            name={I18nManager.isRTL ? "chevron-back" : "chevron-forward"}
-                            size={18}
-                            color={theme.colors.textPlaceholder}
-                        />
+                        <Text style={styles.name} numberOfLines={1}>
+                            {item.name}
+                        </Text>
+                        <Text style={styles.desc} numberOfLines={2}>
+                            {item.description}
+                        </Text>
                     </PremiumPressable>
                 )}
             />
@@ -169,174 +164,133 @@ export default function ToolsScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.background },
+    container: { backgroundColor: theme.colors.background, flex: 1 },
 
-    countBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: 'rgba(255,255,255,0.10)',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 14,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.14)',
-    },
-    countBadgeText: {
-        fontSize: 14,
-        fontFamily: theme.fonts.black,
-        color: theme.colors.heroText,
-        marginTop: 2,
-    },
-
-    /* --- Search Bar --- */
     searchWrap: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: 18,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.20)',
-        paddingHorizontal: 16,
-        height: 52,
-        flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
-        marginTop: 18,
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.md,
+        borderWidth: 1,
+        flexDirection: 'row',
+        gap: 10,
+        height: 48,
+        marginHorizontal: 20,
+        marginTop: 8,
+        paddingHorizontal: 14,
     },
     searchInput: {
-        flex: 1,
-        fontSize: 15,
         color: theme.colors.text,
+        flex: 1,
         fontFamily: theme.fonts.medium,
+        fontSize: 14,
     },
 
-    /* --- Categories --- */
     catWrap: {
-        marginTop: 16,
-        marginBottom: 8,
+        marginTop: 14,
     },
     catList: {
+        gap: 8,
         paddingHorizontal: 20,
-        gap: 10
-    },
-    chip: {
-        height: 40,
-        paddingHorizontal: 20,
-        borderRadius: theme.radius.full,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        backgroundColor: theme.colors.surface,
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...theme.shadow.sm,
-    },
-    chipActive: {
-        backgroundColor: theme.colors.primaryDark,
-        borderColor: theme.colors.primaryDark,
-    },
-    chipText: {
-        color: theme.colors.textSecondary,
-        fontSize: 13,
-        fontFamily: theme.fonts.bold,
-    },
-    chipTextActive: {
-        color: '#fff'
     },
 
-    /* --- Results & Grid --- */
     resultsHeader: {
-        paddingHorizontal: 20,
         marginBottom: 12,
-        alignItems: 'flex-start',
+        marginTop: 18,
     },
     countText: {
         color: theme.colors.textMuted,
+        fontFamily: theme.fonts.bold,
         fontSize: 12,
-        fontFamily: theme.fonts.medium,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
+        textAlign: RTL_ALIGN,
     },
 
     listContent: {
-        paddingHorizontal: 20,
         paddingBottom: 40,
-        gap: 12,
+        paddingHorizontal: GRID_PADDING,
+    },
+    row: {
+        gap: GRID_GAP,
+        marginBottom: GRID_GAP,
     },
     card: {
-        width: '100%',
         backgroundColor: theme.colors.surface,
-        borderWidth: 1,
         borderColor: theme.colors.borderLight,
-        borderRadius: 20,
-        padding: 16,
-        minHeight: 96,
-        flexDirection: 'row',
+        borderRadius: theme.radius.lg,
+        borderWidth: 1,
+        minHeight: 132,
+        padding: 14,
+    },
+    cardTop: {
         alignItems: 'center',
+        flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: 14,
-        ...theme.shadow.sm,
+        marginBottom: 10,
     },
     iconBox: {
-        width: 52,
-        height: 52,
-        borderRadius: theme.radius.md,
+        alignItems: 'center',
         backgroundColor: theme.colors.primarySoft,
-        alignItems: 'center',
+        borderRadius: theme.radius.md,
+        height: 38,
         justifyContent: 'center',
-        position: 'relative',
-        borderWidth: 1,
-        borderColor: theme.colors.primaryLight,
+        width: 38,
     },
-    aiBadge: {
-        position: 'absolute',
-        top: -6,
-        right: -6,
-        backgroundColor: theme.colors.warning,
-        width: 18,
-        height: 18,
-        borderRadius: 9,
+    aiPill: {
         alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: theme.colors.surface,
+        backgroundColor: theme.colors.primarySoft,
+        borderRadius: theme.radius.full,
+        flexDirection: 'row',
+        gap: 3,
+        paddingHorizontal: 7,
+        paddingVertical: 2,
     },
-    cardText: {
-        flex: 1,
-        alignItems: 'flex-start',
+    aiPillText: {
+        color: theme.colors.primary,
+        fontFamily: theme.fonts.black,
+        fontSize: 10,
     },
     name: {
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
         color: theme.colors.text,
-        fontSize: 15,
         fontFamily: theme.fonts.black,
+        fontSize: 14,
         marginBottom: 4,
+        textAlign: RTL_ALIGN,
     },
     desc: {
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
         color: theme.colors.textMuted,
-        fontSize: 13,
         fontFamily: theme.fonts.medium,
-        lineHeight: 20,
+        fontSize: 12,
+        lineHeight: 18,
+        textAlign: RTL_ALIGN,
     },
 
-    /* --- Empty State --- */
     emptyState: {
         alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: 60,
+        marginTop: 60,
         paddingHorizontal: 32,
     },
+    emptyIcon: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.full,
+        borderWidth: 1,
+        height: 72,
+        justifyContent: 'center',
+        marginBottom: 16,
+        width: 72,
+    },
     emptyTitle: {
-        fontSize: 18,
         color: theme.colors.text,
         fontFamily: theme.fonts.black,
-        marginTop: 16,
+        fontSize: 16,
         textAlign: 'center',
     },
     emptySub: {
-        fontSize: 14,
         color: theme.colors.textMuted,
-        fontFamily: theme.fonts.regular,
-        marginTop: 8,
+        fontFamily: theme.fonts.medium,
+        fontSize: 13,
+        marginTop: 6,
         textAlign: 'center',
-        lineHeight: 22,
     },
 });

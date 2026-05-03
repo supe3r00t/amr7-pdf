@@ -20,32 +20,27 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.background,
     },
     header: {
-        flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: theme.colors.background,
+        flexDirection: 'row',
         justifyContent: 'space-between',
-        backgroundColor: theme.colors.brandDeep,
+        paddingBottom: 12,
         paddingHorizontal: 20,
-        paddingBottom: 16,
-        marginHorizontal: 14,
-        marginTop: 8,
-        borderRadius: 26,
-        overflow: 'hidden',
-        ...theme.shadow.lg,
     },
     backBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: theme.radius.md,
-        backgroundColor: 'rgba(255,255,255,0.10)',
         alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.full,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.16)',
+        height: 38,
+        justifyContent: 'center',
+        width: 38,
     },
     headerTitle: {
-        fontSize: 18,
-        color: theme.colors.white,
+        color: theme.colors.text,
         fontFamily: theme.fonts.black,
+        fontSize: 17,
     },
     content: {
         paddingTop: 24,
@@ -305,16 +300,16 @@ export default function PrivacyScreen() {
 
     return (
         <View style={styles.container}>
-            <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) + 10 }]}>
-                <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
+            <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) + 8 }]}>
+                <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
                     <Ionicons
-                        name={I18nManager.isRTL ? "arrow-forward" : "arrow-back"}
+                        name={I18nManager.isRTL ? 'chevron-forward' : 'chevron-back'}
                         size={22}
-                        color={theme.colors.white}
+                        color={theme.colors.text}
                     />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>سياسة الخصوصية</Text>
-                <View style={{ width: 44 }} />
+                <View style={{ width: 38 }} />
             </View>
 
             <ScrollView

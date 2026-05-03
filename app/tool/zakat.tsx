@@ -81,18 +81,19 @@ export default function ZakatScreen() {
                 keyboardShouldPersistTaps="handled"
             >
                 {/* Header Section */}
-                <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) + 10 }]}>
-                    <View style={styles.headerAccent} />
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) + 8 }]}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
                         <Ionicons
-                            name={I18nManager.isRTL ? "arrow-forward" : "arrow-back"}
+                            name={I18nManager.isRTL ? 'chevron-forward' : 'chevron-back'}
                             size={22}
-                            color={theme.colors.white}
+                            color={theme.colors.text}
                         />
                     </TouchableOpacity>
                     <View style={styles.headerTitleContainer}>
                         <Text style={styles.title}>الحاسبة الزكوية</Text>
-                        <MaterialCommunityIcons name="calculator-variant-outline" size={24} color={theme.colors.accent} />
+                    </View>
+                    <View style={styles.headerIconBox}>
+                        <MaterialCommunityIcons name="calculator-variant-outline" size={20} color={theme.colors.primary} />
                     </View>
                 </View>
 
@@ -172,46 +173,43 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background },
 
     header: {
-        flexDirection: 'row',
         alignItems: 'center',
-        paddingBottom: 20,
+        backgroundColor: theme.colors.background,
+        flexDirection: 'row',
+        gap: 12,
+        paddingBottom: 12,
         paddingHorizontal: 20,
-        backgroundColor: theme.colors.brandDeep,
-        borderColor: 'rgba(255,255,255,0.10)',
-        borderWidth: 1,
-        marginHorizontal: 14,
-        marginTop: 8,
-        borderRadius: 26,
-        overflow: 'hidden',
-        ...theme.shadow.lg,
-    },
-    headerAccent: {
-        position: 'absolute',
-        top: 0,
-        left: 20,
-        right: 20,
-        height: 3,
-        backgroundColor: theme.colors.primary,
     },
     backBtn: {
-        width: 44,
-        height: 44,
-        borderRadius: theme.radius.md,
-        backgroundColor: 'rgba(255,255,255,0.10)',
         alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.full,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.16)',
-        marginEnd: 16,
+        height: 38,
+        justifyContent: 'center',
+        width: 38,
     },
     headerTitleContainer: {
+        alignItems: 'flex-start',
         flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        gap: 8,
     },
-    title: { fontSize: 22, fontFamily: theme.fonts.black, color: theme.colors.white, textAlign: I18nManager.isRTL ? 'right' : 'left' },
+    title: {
+        color: theme.colors.text,
+        fontFamily: theme.fonts.black,
+        fontSize: 18,
+        textAlign: I18nManager.isRTL ? 'right' : 'left',
+    },
+    headerIconBox: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.primarySoft,
+        borderColor: theme.colors.borderBrand,
+        borderRadius: theme.radius.full,
+        borderWidth: 1,
+        height: 38,
+        justifyContent: 'center',
+        width: 38,
+    },
 
     nisabBox: {
         margin: 20,

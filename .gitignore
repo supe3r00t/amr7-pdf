@@ -44,3 +44,9 @@ app-example
 
 # IDE
 .idea/
+
+# Apple App Store Connect private keys
+credentials/*.p8
+
+# Apple App Store Connect private keys
+credentials/*.p8

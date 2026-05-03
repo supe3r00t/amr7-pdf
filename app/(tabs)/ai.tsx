@@ -1,77 +1,64 @@
-import { View, Text, FlatList, StyleSheet, I18nManager } from 'react-native';
+import { FlatList, I18nManager, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { theme } from '@/constants/theme';
 import { AI_TOOLS } from '@/constants/tools';
 import { ToolIcon } from '@/components/tool-icon';
-import { AppHeader, PremiumCard } from '@/components/premium-ui';
+import { AppHeader } from '@/components/premium-ui';
 import { PremiumPressable } from '@/components/premium-pressable';
+
+const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
 
 export default function AIScreen() {
     const handleToolPress = (id: string) => {
-        // اهتزاز متوسط يعطي إحساساً بـ "تشغيل محرك الذكاء الاصطناعي"
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/tool/${id}`);
     };
 
     return (
         <View style={styles.container}>
             <AppHeader
-                eyebrow="بنية تحليل متقدمة بـ Google Gemini™"
-                title="مساحة آمر AI"
-                subtitle="أدوات ذكية لتحليل المستندات والنصوص بواجهة عربية واضحة."
-                icon="robot-outline"
-                compact
+                eyebrow="آمر AI"
+                title="أدوات ذكاء اصطناعي"
+                subtitle="حلّل، لخّص، وأعد صياغة المستندات والنصوص بدقّة عربية."
+                icon="auto-fix"
             />
 
-            {/* Premium Info Banner */}
-            <PremiumCard style={styles.infoBanner}>
-                <View style={styles.iconBoxInfo}>
-                    <Ionicons name="sparkles" size={18} color={theme.colors.surface} />
+            <View style={styles.banner}>
+                <View style={styles.bannerIcon}>
+                    <Ionicons name="sparkles" size={16} color={theme.colors.primary} />
                 </View>
-                <View style={styles.infoTextContainer}>
-                    <Text style={styles.infoTitle}>ارتقِ بإنتاجيتك الذكية</Text>
-                    <Text style={styles.infoText}>
-                        مجموعة أدوات احترافية مصممة لتحليل، تلخيص، ومعالجة مستنداتك ونصوصك بذكاء فائق وفي ثوانٍ معدودة.
-                    </Text>
-                </View>
-            </PremiumCard>
+                <Text style={styles.bannerText}>
+                    مدعوم بأحدث تقنيات الذكاء الاصطناعي · استجابة في ثوانٍ
+                </Text>
+            </View>
 
-            {/* AI Tools List */}
             <FlatList
                 data={AI_TOOLS}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
                 renderItem={({ item }) => (
                     <PremiumPressable
                         style={styles.card}
                         onPress={() => handleToolPress(item.id)}
                     >
-                        {/* Premium Icon Box */}
                         <View style={styles.iconBox}>
-                            <ToolIcon tool={item} size={26} />
-                            {/* شارة صغيرة توحي بالذكاء */}
-                            <View style={styles.aiBadge}>
-                                <Ionicons name="sparkles" size={10} color={theme.colors.surface} />
-                            </View>
+                            <ToolIcon tool={item} size={22} />
                         </View>
 
-                        {/* Text Content */}
                         <View style={styles.textWrap}>
-                            <Text style={styles.name}>{item.name}</Text>
+                            <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
                             <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>
                         </View>
 
-                        {/* Smart RTL Arrow */}
-                        <View style={styles.arrowBox}>
-                            <Ionicons
-                                name={I18nManager.isRTL ? "chevron-back" : "chevron-forward"}
-                                size={20}
-                                color={theme.colors.textMuted}
-                            />
-                        </View>
+                        <Ionicons
+                            name={I18nManager.isRTL ? 'chevron-back' : 'chevron-forward'}
+                            size={18}
+                            color={theme.colors.textMuted}
+                        />
                     </PremiumPressable>
                 )}
             />
@@ -80,111 +67,78 @@ export default function AIScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.background },
+    container: { backgroundColor: theme.colors.background, flex: 1 },
 
-    infoBanner: {
-        marginHorizontal: 20,
-        marginTop: 24,
-        backgroundColor: theme.colors.primaryDark,
-        borderColor: 'rgba(31,167,162,0.18)',
-        borderRadius: theme.radius.xl,
-        paddingVertical: 16,
-        paddingHorizontal: 16,
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        gap: 14,
-    },
-    iconBoxInfo: {
-        width: 38,
-        height: 38,
-        borderRadius: theme.radius.md,
-        backgroundColor: 'rgba(255,255,255,0.2)', // شفافية زجاجية أنيقة
+    banner: {
         alignItems: 'center',
+        backgroundColor: theme.colors.primarySoft,
+        borderColor: theme.colors.borderBrand,
+        borderRadius: theme.radius.md,
+        borderWidth: 1,
+        flexDirection: 'row',
+        gap: 10,
+        marginHorizontal: 20,
+        marginTop: 8,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+    },
+    bannerIcon: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.radius.full,
+        height: 28,
         justifyContent: 'center',
+        width: 28,
     },
-    infoTextContainer: {
+    bannerText: {
+        color: theme.colors.text,
         flex: 1,
-    },
-    infoTitle: {
-        fontSize: 15,
-        color: theme.colors.surface,
-        fontFamily: theme.fonts.black,
-        marginBottom: 4,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    infoText: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.85)',
-        fontFamily: theme.fonts.regular,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-        lineHeight: 20,
+        fontFamily: theme.fonts.bold,
+        fontSize: 12,
+        textAlign: RTL_ALIGN,
     },
 
     list: {
-        paddingHorizontal: 20,
-        paddingTop: 24,
         paddingBottom: 40,
-        gap: 16
+        paddingHorizontal: 20,
+        paddingTop: 20,
+    },
+    separator: {
+        height: 10,
     },
     card: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: theme.colors.borderLight,
-        padding: 16,
-        flexDirection: 'row',
         alignItems: 'center',
-        gap: 16,
-        ...theme.shadow.sm,
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.lg,
+        borderWidth: 1,
+        flexDirection: 'row',
+        gap: 14,
+        padding: 14,
     },
     iconBox: {
-        width: 56,
-        height: 56,
-        borderRadius: theme.radius.md,
+        alignItems: 'center',
         backgroundColor: theme.colors.primarySoft,
-        alignItems: 'center',
+        borderRadius: theme.radius.md,
+        height: 44,
         justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: theme.colors.primaryLight,
-        position: 'relative',
-    },
-    aiBadge: {
-        position: 'absolute',
-        top: -4,
-        right: -4, // سيتم عكسها تلقائياً إذا كان الـ Layout RTL
-        backgroundColor: theme.colors.primary,
-        width: 18,
-        height: 18,
-        borderRadius: 9,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: theme.colors.surface,
+        width: 44,
     },
     textWrap: {
         flex: 1,
-        alignItems: 'flex-start',
     },
     name: {
         color: theme.colors.text,
-        fontSize: 16,
         fontFamily: theme.fonts.black,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-        marginBottom: 4,
+        fontSize: 14,
+        marginBottom: 2,
+        textAlign: RTL_ALIGN,
     },
     desc: {
-        color: theme.colors.textSecondary,
-        fontSize: 13,
-        fontFamily: theme.fonts.regular,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-        lineHeight: 20,
+        color: theme.colors.textMuted,
+        fontFamily: theme.fonts.medium,
+        fontSize: 12,
+        lineHeight: 18,
+        textAlign: RTL_ALIGN,
     },
-    arrowBox: {
-        width: 32,
-        height: 32,
-        borderRadius: theme.radius.full,
-        backgroundColor: theme.colors.background,
-        alignItems: 'center',
-        justifyContent: 'center',
-    }
 });

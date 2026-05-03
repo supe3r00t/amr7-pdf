@@ -1,64 +1,56 @@
-import React from 'react';
 import {
-    View,
-    Text,
-    ScrollView,
-    TouchableOpacity,
-    StyleSheet,
-    Linking,
     I18nManager,
+    Linking,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { theme } from '@/constants/theme';
 import { AppHeader, PremiumCard } from '@/components/premium-ui';
+import { PremiumPressable } from '@/components/premium-pressable';
+
+const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
 
 const CONTACTS = [
     {
-        id: 'unified',
-        label: 'الرقم الموحد',
-        value: '920017083', // ⚠️ يرجى استبدال هذا الرقم برقمك الموحد الفعلي
-        icon: 'phone-classic',
-        color: '#FF9800',
-        bg: '#FFF3E0',
-        action: () => Linking.openURL('tel:920017083'), // ⚠️ وتعديله هنا أيضاً
-    },
-    {
         id: 'whatsapp',
-        label: 'محادثة فورية (واتساب)',
+        label: 'واتساب · فوري',
         value: '0505336956',
         icon: 'whatsapp',
-        color: '#25D366',
-        bg: '#EDFBF2',
         action: () => Linking.openURL('https://wa.me/966505336956'),
     },
     {
+        id: 'unified',
+        label: 'الرقم الموحد',
+        value: '920017083',
+        icon: 'phone-classic',
+        action: () => Linking.openURL('tel:920017083'),
+    },
+    {
         id: 'phone',
-        label: 'الاتصال المباشر',
+        label: 'اتصال مباشر',
         value: '0505336956',
         icon: 'phone-outline',
-        color: theme.colors.primary,
-        bg: theme.colors.primarySoft,
         action: () => Linking.openURL('tel:0505336956'),
     },
     {
         id: 'email',
-        label: 'البريد الإلكتروني للأعمال',
+        label: 'البريد الإلكتروني',
         value: 'info@amr-7.sa',
         icon: 'email-outline',
-        color: '#EA4335',
-        bg: '#FEF0EE',
         action: () => Linking.openURL('mailto:info@amr-7.sa'),
     },
     {
         id: 'website',
-        label: 'بوابة الويب الرسمية',
+        label: 'الموقع الرسمي',
         value: 'amr-7.sa',
         icon: 'web',
-        color: theme.colors.primaryDark,
-        bg: '#EFF4FA',
         action: () => Linking.openURL('https://amr-7.sa'),
     },
 ];
@@ -66,265 +58,232 @@ const CONTACTS = [
 const SOCIAL = [
     {
         id: 'instagram',
-        label: 'إنستغرام',
         family: 'MaterialCommunityIcons',
         icon: 'instagram',
-        color: '#E4405F',
-        url: 'https://www.instagram.com/amr7.sa/'
+        url: 'https://www.instagram.com/amr7.sa/',
     },
     {
         id: 'tiktok',
-        label: 'تيك توك',
         family: 'FontAwesome5',
         icon: 'tiktok',
-        color: '#000000',
-        url: 'https://www.tiktok.com/@amr7sa3'
+        url: 'https://www.tiktok.com/@amr7sa3',
     },
     {
         id: 'linkedin',
-        label: 'لينكد إن',
         family: 'MaterialCommunityIcons',
         icon: 'linkedin',
-        color: '#0A66C2',
-        url: 'https://www.linkedin.com/in/ahmed-alammar-5893a121b/'
+        url: 'https://www.linkedin.com/in/ahmed-alammar-5893a121b/',
     },
 ];
 
 export default function ContactScreen() {
     const insets = useSafeAreaInsets();
 
-    const handleActionPress = async (action: () => void) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const handleAction = async (action: () => void) => {
+        Haptics.selectionAsync();
         await action();
     };
 
-    const handleSocialPress = async (url: string) => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        await Linking.openURL(url);
-    };
-
     const openSupportTicket = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        router.push('/support'); // توجيه المستخدم لشاشة الدعم الفني التي صممناها سابقاً
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        router.push('/support');
     };
 
     return (
         <ScrollView
             style={styles.container}
-            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 48 }]}
+            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 32 }]}
             showsVerticalScrollIndicator={false}
         >
             <AppHeader
-                eyebrow="فريقنا متواجد لدعم أعمالك"
-                title="العناية بالعملاء"
-                subtitle="اختر قناة التواصل المناسبة، أو افتح تذكرة دعم عند الحاجة."
+                eyebrow="مركز المساعدة"
+                title="نحن هنا لمساعدتك"
+                subtitle="اختر القناة الأنسب أو افتح تذكرة دعم."
                 icon="headset"
-                compact
             />
 
-            {/* Support Ticket CTA (Call to Action) */}
-            <View style={styles.supportCtaContainer}>
-                <TouchableOpacity
-                    style={styles.supportCtaBtn}
-                    onPress={openSupportTicket}
-                    activeOpacity={0.8}
-                >
-                    <View style={styles.supportCtaTextWrap}>
-                        <Text style={styles.supportCtaTitle}>تحتاج مساعدة تقنية؟</Text>
-                        <Text style={styles.supportCtaDesc}>افتح تذكرة دعم وسنقوم بحل مشكلتك فوراً</Text>
-                    </View>
-                    <View style={styles.supportCtaIconBox}>
-                        <MaterialCommunityIcons
-                            name={I18nManager.isRTL ? "arrow-left" : "arrow-right"}
-                            size={20}
-                            color={theme.colors.surface}
-                        />
-                    </View>
-                </TouchableOpacity>
-            </View>
+            <PremiumPressable style={styles.ctaCard} onPress={openSupportTicket}>
+                <View style={styles.ctaIcon}>
+                    <Ionicons name="ticket-outline" size={20} color={theme.colors.white} />
+                </View>
+                <View style={styles.ctaText}>
+                    <Text style={styles.ctaTitle}>فتح تذكرة دعم</Text>
+                    <Text style={styles.ctaSub}>يردّ فريقنا خلال ساعات العمل</Text>
+                </View>
+                <Ionicons
+                    name={I18nManager.isRTL ? 'chevron-back' : 'chevron-forward'}
+                    size={18}
+                    color={theme.colors.white}
+                />
+            </PremiumPressable>
 
-            {/* Contact Cards */}
             <PremiumCard style={styles.section}>
-                <Text style={styles.sectionTitle}>قنوات الاتصال المباشر</Text>
+                <Text style={styles.sectionTitle}>قنوات التواصل</Text>
                 {CONTACTS.map((c, index) => (
                     <TouchableOpacity
                         key={c.id}
-                        style={[styles.contactCard, index === CONTACTS.length - 1 && { borderBottomWidth: 0 }]}
-                        onPress={() => handleActionPress(c.action)}
+                        style={[styles.contactRow, index === CONTACTS.length - 1 && styles.contactRowLast]}
+                        onPress={() => handleAction(c.action)}
                         activeOpacity={0.7}
                     >
-                        <View style={[styles.contactIconBox, { backgroundColor: c.bg }]}>
-                            <MaterialCommunityIcons name={c.icon as any} size={22} color={c.color} />
+                        <View style={styles.contactIcon}>
+                            <MaterialCommunityIcons name={c.icon as any} size={20} color={theme.colors.primary} />
                         </View>
-
                         <View style={styles.contactInfo}>
-                            <Text style={styles.contactValue}>{c.value}</Text>
+                            <Text style={styles.contactValue} numberOfLines={1}>{c.value}</Text>
                             <Text style={styles.contactLabel}>{c.label}</Text>
                         </View>
-
-                        {/* Smart RTL Arrow */}
-                        <MaterialCommunityIcons
-                            name={I18nManager.isRTL ? "chevron-left" : "chevron-right"}
-                            size={20}
+                        <Ionicons
+                            name={I18nManager.isRTL ? 'chevron-back' : 'chevron-forward'}
+                            size={16}
                             color={theme.colors.textMuted}
                         />
                     </TouchableOpacity>
                 ))}
             </PremiumCard>
 
-            {/* Social */}
             <PremiumCard style={styles.section}>
-                <Text style={styles.sectionTitle}>المنصات الاجتماعية</Text>
+                <Text style={styles.sectionTitle}>تابعنا</Text>
                 <View style={styles.socialRow}>
                     {SOCIAL.map((s) => (
                         <TouchableOpacity
                             key={s.id}
                             style={styles.socialBtn}
-                            onPress={() => handleSocialPress(s.url)}
+                            onPress={() => handleAction(() => Linking.openURL(s.url))}
                             activeOpacity={0.7}
                         >
                             {s.family === 'FontAwesome5' ? (
-                                <FontAwesome5 name={s.icon as any} size={22} color={s.color} />
+                                <FontAwesome5 name={s.icon as any} size={20} color={theme.colors.text} />
                             ) : (
-                                <MaterialCommunityIcons name={s.icon as any} size={24} color={s.color} />
+                                <MaterialCommunityIcons name={s.icon as any} size={22} color={theme.colors.text} />
                             )}
-                            <Text style={styles.socialLabel}>{s.label}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
             </PremiumCard>
 
-            {/* Support Note */}
             <View style={styles.note}>
-                <MaterialCommunityIcons name="clock-outline" size={18} color={theme.colors.textMuted} />
-                <Text style={styles.noteText}>أوقات العمل الرسمية: الأحد – الخميس · ٩:٠٠ ص – ٦:٠٠ م</Text>
+                <Ionicons name="time-outline" size={14} color={theme.colors.textMuted} />
+                <Text style={styles.noteText}>الأحد – الخميس · 9:00 ص – 6:00 م</Text>
             </View>
         </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.background },
-    content: { paddingBottom: 48 },
+    container: { backgroundColor: theme.colors.background, flex: 1 },
+    content: { paddingBottom: 32 },
 
-    supportCtaContainer: {
-        paddingHorizontal: 20,
-        marginTop: 20,
-    },
-    supportCtaBtn: {
-        backgroundColor: theme.colors.primaryDark,
-        borderRadius: theme.radius.xl,
-        padding: 20,
-        flexDirection: 'row',
+    ctaCard: {
         alignItems: 'center',
-        justifyContent: 'space-between',
+        backgroundColor: theme.colors.primary,
+        borderRadius: theme.radius.lg,
+        flexDirection: 'row',
+        gap: 14,
+        marginHorizontal: 20,
+        marginTop: 8,
+        padding: 18,
         ...theme.shadow.md,
     },
-    supportCtaTextWrap: {
-        flex: 1,
-        alignItems: 'flex-start',
-    },
-    supportCtaTitle: {
-        color: theme.colors.surface,
-        fontSize: 16,
-        fontFamily: theme.fonts.black,
-        marginBottom: 4,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    supportCtaDesc: {
-        color: 'rgba(255,255,255,0.85)',
-        fontSize: 13,
-        fontFamily: theme.fonts.regular,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-    },
-    supportCtaIconBox: {
-        width: 36,
-        height: 36,
-        borderRadius: theme.radius.full,
-        backgroundColor: 'rgba(255,255,255,0.2)',
+    ctaIcon: {
         alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.18)',
+        borderRadius: theme.radius.full,
+        height: 40,
         justifyContent: 'center',
+        width: 40,
+    },
+    ctaText: {
+        flex: 1,
+    },
+    ctaTitle: {
+        color: theme.colors.white,
+        fontFamily: theme.fonts.black,
+        fontSize: 15,
+        textAlign: RTL_ALIGN,
+    },
+    ctaSub: {
+        color: 'rgba(255,255,255,0.85)',
+        fontFamily: theme.fonts.medium,
+        fontSize: 12,
+        marginTop: 2,
+        textAlign: RTL_ALIGN,
     },
 
     section: {
         marginHorizontal: 20,
-        marginTop: 24,
-        padding: 20,
+        marginTop: 16,
+        padding: 18,
     },
     sectionTitle: {
-        fontSize: 16,
-        color: theme.colors.primaryDark,
+        color: theme.colors.text,
         fontFamily: theme.fonts.black,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-        marginBottom: 16,
+        fontSize: 15,
+        marginBottom: 12,
+        textAlign: RTL_ALIGN,
     },
 
-    contactCard: {
-        flexDirection: 'row',
+    contactRow: {
         alignItems: 'center',
-        gap: 14,
-        paddingVertical: 14,
-        borderBottomWidth: 1,
         borderBottomColor: theme.colors.borderLight,
+        borderBottomWidth: 1,
+        flexDirection: 'row',
+        gap: 12,
+        paddingVertical: 12,
     },
-    contactIconBox: {
-        width: 44,
-        height: 44,
-        borderRadius: theme.radius.md,
+    contactRowLast: {
+        borderBottomWidth: 0,
+        paddingBottom: 0,
+    },
+    contactIcon: {
         alignItems: 'center',
+        backgroundColor: theme.colors.primarySoft,
+        borderRadius: theme.radius.md,
+        height: 38,
         justifyContent: 'center',
-        flexShrink: 0,
-        borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.03)',
+        width: 38,
     },
-    contactInfo: { flex: 1, alignItems: 'flex-start' },
-    contactLabel: {
-        fontSize: 12,
-        color: theme.colors.textMuted,
-        fontFamily: theme.fonts.regular,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
-        marginTop: 4,
+    contactInfo: {
+        flex: 1,
     },
     contactValue: {
-        fontSize: 15,
         color: theme.colors.text,
         fontFamily: theme.fonts.bold,
-        textAlign: I18nManager.isRTL ? 'right' : 'left',
+        fontSize: 14,
+        textAlign: RTL_ALIGN,
+    },
+    contactLabel: {
+        color: theme.colors.textMuted,
+        fontFamily: theme.fonts.medium,
+        fontSize: 11,
+        marginTop: 2,
+        textAlign: RTL_ALIGN,
     },
 
     socialRow: {
         flexDirection: 'row',
-        gap: 12,
+        gap: 10,
     },
     socialBtn: {
-        flex: 1,
-        backgroundColor: theme.colors.background,
-        borderRadius: theme.radius.md,
-        borderWidth: 1,
-        borderColor: theme.colors.borderLight,
-        paddingVertical: 16,
         alignItems: 'center',
-        gap: 8,
-    },
-    socialLabel: {
-        fontSize: 12,
-        color: theme.colors.textSecondary,
-        fontFamily: theme.fonts.bold,
-        textAlign: 'center',
+        backgroundColor: theme.colors.surfaceAlt,
+        borderRadius: theme.radius.md,
+        flex: 1,
+        height: 50,
+        justifyContent: 'center',
     },
 
     note: {
-        marginHorizontal: 20,
-        marginTop: 24,
-        flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        flexDirection: 'row',
+        gap: 6,
         justifyContent: 'center',
+        marginHorizontal: 20,
+        marginTop: 18,
     },
     noteText: {
-        fontSize: 12,
         color: theme.colors.textMuted,
-        fontFamily: theme.fonts.regular,
-        textAlign: 'center',
+        fontFamily: theme.fonts.medium,
+        fontSize: 12,
     },
 });

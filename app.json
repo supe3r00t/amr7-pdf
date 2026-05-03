@@ -2,7 +2,7 @@
   "expo": {
     "name": "AMR 7 PDF Tools",
     "slug": "amr7-pdf",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "default",
     "scheme": "amr7pdf",
     "userInterfaceStyle": "light",
@@ -15,14 +15,14 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "sa.amr7.pdf",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "sa.amr7.pdf",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#063A3D"

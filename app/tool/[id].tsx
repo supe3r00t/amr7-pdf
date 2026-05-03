@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
     ActivityIndicator,
     Alert,
-    TextInput,
-    Platform,
     I18nManager,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -23,11 +23,12 @@ import { theme } from '@/constants/theme';
 import { getToolById } from '@/constants/tools';
 import { ToolIcon } from '@/components/tool-icon';
 
-// ─── ثوابت ───────────────────────────────────────────────
-const API_BASE    = 'https://pdf.amr7.io/api';
-const WEB_BASE    = 'https://pdf.amr7.io/tools';
+const RTL_ALIGN = I18nManager.isRTL ? 'right' : 'left';
 
-// أدوات تُفتح في WebView (لا يوجد API مباشر لها)
+// ─── ثوابت ───────────────────────────────────────────────
+const API_BASE = 'https://pdf.amr7.io/api';
+const WEB_BASE = 'https://pdf.amr7.io/tools';
+
 const WEBVIEW_TOOLS = new Set([
     'sign-pdf', 'fill-pdf-form', 'edit-pdf-text', 'pdf-reader',
     'scan-document', 'redact-pdf', 'translate-pdf', 'compare-pdf',
@@ -37,28 +38,27 @@ const WEBVIEW_TOOLS = new Set([
     'color-tools', 'image-tools', 'dev-tools', 'zakat', 'support',
 ]);
 
-// slug الأداة في الموقع (إذا اختلف عن id)
 const WEB_SLUG: Record<string, string> = {
-    'ai-chat':          'ai-chat-pdf',
-    'ai-summarize':     'ai-summarizer',
-    'ai-tables':        'ai-extract-tables',
-    'ai-image-gen':     'ai-image-gen',
-    'prompt-gen':       'prompt-generator',
-    'prompt-check':     'prompt-checker',
-    'header-footer':    'header-footer-pdf',
-    'edit-metadata':    'edit-metadata',
-    'pdf-to-pptx':      'pdf-to-pptx',
-    'pdf-to-excel':     'pdf-to-excel',
-    'html-to-pdf':      'html-to-pdf',
-    'pdf-a':            'pdf-a',
-    'sign-pdf':         'sign-pdf',
-    'scan-document':    'scan-document',
-    'fill-pdf-form':    'fill-pdf-form',
-    'edit-pdf-text':    'edit-pdf-text',
-    'pdf-reader':       'pdf-reader',
-    'redact-pdf':       'redact-pdf',
-    'translate-pdf':    'translate-pdf',
-    'compare-pdf':      'compare-pdf',
+    'ai-chat':       'ai-chat-pdf',
+    'ai-summarize':  'ai-summarizer',
+    'ai-tables':     'ai-extract-tables',
+    'ai-image-gen':  'ai-image-gen',
+    'prompt-gen':    'prompt-generator',
+    'prompt-check':  'prompt-checker',
+    'header-footer': 'header-footer-pdf',
+    'edit-metadata': 'edit-metadata',
+    'pdf-to-pptx':   'pdf-to-pptx',
+    'pdf-to-excel':  'pdf-to-excel',
+    'html-to-pdf':   'html-to-pdf',
+    'pdf-a':         'pdf-a',
+    'sign-pdf':      'sign-pdf',
+    'scan-document': 'scan-document',
+    'fill-pdf-form': 'fill-pdf-form',
+    'edit-pdf-text': 'edit-pdf-text',
+    'pdf-reader':    'pdf-reader',
+    'redact-pdf':    'redact-pdf',
+    'translate-pdf': 'translate-pdf',
+    'compare-pdf':   'compare-pdf',
 };
 
 const API_MAP: Record<string, string> = {
@@ -108,18 +108,18 @@ const TOOL_OPTIONS: Record<string, { label: string; key: string; placeholder: st
     split:           [{ label: 'أرقام الصفحات', key: 'pages', placeholder: 'مثال: 1,3,5' }],
     'extract-pages': [{ label: 'الصفحات المطلوبة', key: 'pages', placeholder: 'مثال: 1-3' }],
     'delete-pages':  [{ label: 'الصفحات للحذف', key: 'pages', placeholder: 'مثال: 2,4' }],
-    protect:         [{ label: 'كلمة المرور الجديدة', key: 'password', placeholder: 'أدخل كلمة المرور لحماية الملف' }],
-    unlock:          [{ label: 'كلمة المرور الحالية', key: 'password', placeholder: 'أدخل كلمة المرور لفتح الملف' }],
+    protect:         [{ label: 'كلمة المرور الجديدة', key: 'password', placeholder: 'كلمة المرور لحماية الملف' }],
+    unlock:          [{ label: 'كلمة المرور الحالية', key: 'password', placeholder: 'أدخل كلمة المرور الحالية' }],
     watermark:       [{ label: 'نص العلامة المائية', key: 'text', placeholder: 'سري | نسخة تجريبية' }],
     'edit-metadata': [
         { label: 'عنوان الملف', key: 'title', placeholder: 'اسم المستند الجديد' },
         { label: 'اسم المؤلف', key: 'author', placeholder: 'اسم الكاتب أو الجهة' },
     ],
     'ai-chat':       [{ label: 'السؤال أو الطلب', key: 'question', placeholder: 'اطلب تلخيصاً، أو اسأل عن أي معلومة في الملف...', multiline: true }],
-    'prompt-gen':    [{ label: 'الفكرة الأساسية', key: 'idea', placeholder: 'اشرح الفكرة التي تريد تحويلها إلى أمر (Prompt) احترافي...', multiline: true }],
-    'prompt-check':  [{ label: 'الأمر (Prompt) الحالي', key: 'prompt', placeholder: 'ألصق الأمر هنا ليقوم الذكاء الاصطناعي بتقييمه وتحسينه...', multiline: true }],
-    humanizer:       [{ label: 'النص المولد آلياً', key: 'text', placeholder: 'ألصق النص هنا لإعادة صياغته بأسلوب بشري طبيعي...', multiline: true }],
-    'ai-detector':   [{ label: 'النص المراد فحصه', key: 'text', placeholder: 'ألصق النص هنا لمعرفة نسبة توليده بالذكاء الاصطناعي...', multiline: true }],
+    'prompt-gen':    [{ label: 'الفكرة الأساسية', key: 'idea', placeholder: 'اشرح الفكرة لتحويلها إلى أمر احترافي...', multiline: true }],
+    'prompt-check':  [{ label: 'الأمر الحالي', key: 'prompt', placeholder: 'ألصق الأمر هنا للتقييم والتحسين...', multiline: true }],
+    humanizer:       [{ label: 'النص المولد آلياً', key: 'text', placeholder: 'ألصق النص لإعادة الصياغة...', multiline: true }],
+    'ai-detector':   [{ label: 'النص المراد فحصه', key: 'text', placeholder: 'ألصق النص لمعرفة نسبة التوليد الآلي...', multiline: true }],
 };
 
 // ─── مكوّن WebView ────────────────────────────────────────
@@ -131,21 +131,18 @@ function ToolWebView({ toolId, toolName, onBack }: { toolId: string; toolName: s
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-            {/* Header */}
-            <View style={[wvStyles.header, { paddingTop: Math.max(insets.top, 20) + 10 }]}>
-                <TouchableOpacity style={wvStyles.backBtn} onPress={onBack} activeOpacity={0.8}>
+            <View style={[wvStyles.header, { paddingTop: Math.max(insets.top, 12) + 8 }]}>
+                <TouchableOpacity style={wvStyles.backBtn} onPress={onBack} activeOpacity={0.7}>
                     <Ionicons
-                        name={I18nManager.isRTL ? "arrow-forward" : "arrow-back"}
+                        name={I18nManager.isRTL ? 'chevron-forward' : 'chevron-back'}
                         size={22}
-                        color={theme.colors.white}
+                        color={theme.colors.text}
                     />
                 </TouchableOpacity>
                 <Text style={wvStyles.title} numberOfLines={1}>{toolName}</Text>
-                {/* Spacer للحفاظ على التوسيط */}
-                <View style={{ width: 44 }} />
+                <View style={{ width: 38 }} />
             </View>
 
-            {/* Loading Indicator */}
             {loading && (
                 <View style={wvStyles.loadingBar}>
                     <ActivityIndicator size="small" color={theme.colors.primary} />
@@ -186,25 +183,24 @@ export default function ToolScreen() {
     const [textResult, setTextResult] = useState<string | null>(null);
     const [options,    setOptions]    = useState<ToolOptions>({});
 
-    // ── أداة غير موجودة ──
     if (!tool) {
         return (
             <View style={styles.center}>
-                <MaterialCommunityIcons name="alert-circle-outline" size={56} color={theme.colors.textMuted} />
+                <View style={styles.notFoundIcon}>
+                    <MaterialCommunityIcons name="alert-circle-outline" size={32} color={theme.colors.textMuted} />
+                </View>
                 <Text style={styles.notFoundText}>الأداة غير متوفرة حالياً</Text>
                 <TouchableOpacity style={styles.backLink} onPress={() => router.back()}>
-                    <Text style={styles.backLinkText}>العودة للرئيسية</Text>
+                    <Text style={styles.backLinkText}>العودة</Text>
                 </TouchableOpacity>
             </View>
         );
     }
 
-    // ── أداة WebView ──
     if (WEBVIEW_TOOLS.has(id ?? '')) {
         return <ToolWebView toolId={id!} toolName={tool.name} onBack={() => router.back()} />;
     }
 
-    // ── منطق API ──
     const isMulti      = MULTI_FILE_TOOLS.has(id ?? '');
     const isTextResult = TEXT_RESULT_TOOLS.has(id ?? '');
     const isImgResult  = IMG_RESULT_TOOLS.has(id ?? '');
@@ -213,7 +209,7 @@ export default function ToolScreen() {
 
     const pickFile = async () => {
         try {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            Haptics.selectionAsync();
             let mimeTypes: string[] = ['application/pdf'];
             if (WORD_TOOLS.has(id ?? ''))
                 mimeTypes = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword'];
@@ -297,7 +293,7 @@ export default function ToolScreen() {
 
     const share = async () => {
         if (!resultUri) return;
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.selectionAsync();
         const available = await Sharing.isAvailableAsync();
         if (available) {
             await Sharing.shareAsync(resultUri, {
@@ -310,76 +306,77 @@ export default function ToolScreen() {
     };
 
     const reset = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        Haptics.selectionAsync();
         setFiles([]); setDone(false);
         setResultUri(null); setTextResult(null); setOptions({});
     };
 
-    // ── UI ──
     return (
         <ScrollView
             style={styles.container}
-            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 60 }]}
+            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
         >
-            <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) + 10 }]}>
-                <View style={styles.headerAccent} />
-                <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
-                    <Ionicons
-                        name={I18nManager.isRTL ? "arrow-forward" : "arrow-back"}
-                        size={22}
-                        color={theme.colors.white}
-                    />
-                </TouchableOpacity>
-                <View style={styles.headerMain}>
-                    <View style={styles.toolIconBox}>
-                        <ToolIcon tool={tool} size={28} />
+            <View style={[styles.header, { paddingTop: Math.max(insets.top, 12) + 8 }]}>
+                <View style={styles.headerRow}>
+                    <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
+                        <Ionicons
+                            name={I18nManager.isRTL ? 'chevron-forward' : 'chevron-back'}
+                            size={22}
+                            color={theme.colors.text}
+                        />
+                    </TouchableOpacity>
+
+                    <View style={styles.headerCenter}>
+                        <View style={styles.toolIconBox}>
+                            <ToolIcon tool={tool} size={22} />
+                        </View>
                     </View>
-                    <View style={styles.headerText}>
-                        <Text style={styles.toolName}>{tool.name}</Text>
-                        <Text style={styles.toolDesc} numberOfLines={2}>{tool.description}</Text>
-                    </View>
+
+                    <View style={{ width: 38 }} />
+                </View>
+
+                <View style={styles.headerCopy}>
+                    <Text style={styles.toolName}>{tool.name}</Text>
+                    <Text style={styles.toolDesc} numberOfLines={3}>{tool.description}</Text>
                 </View>
             </View>
 
             <View style={styles.body}>
-
-                {/* File Dropzone Area */}
                 {!isNoFile && !done && (
                     <View style={styles.section}>
                         <Text style={styles.sectionLabel}>{isMulti ? 'إرفاق المستندات' : 'إرفاق المستند'}</Text>
                         <TouchableOpacity
                             style={[styles.pickBtn, files.length > 0 && styles.pickBtnFilled]}
                             onPress={pickFile}
-                            activeOpacity={0.8}
+                            activeOpacity={0.85}
                         >
-                            <MaterialCommunityIcons
-                                name={files.length > 0 ? 'file-check-outline' : 'file-upload-outline'}
-                                size={32}
-                                color={files.length > 0 ? theme.colors.primary : theme.colors.textMuted}
-                                style={{ marginBottom: 8 }}
-                            />
+                            <View style={[styles.pickIcon, files.length > 0 && styles.pickIconFilled]}>
+                                <MaterialCommunityIcons
+                                    name={files.length > 0 ? 'file-check-outline' : 'cloud-upload-outline'}
+                                    size={26}
+                                    color={files.length > 0 ? theme.colors.primary : theme.colors.textMuted}
+                                />
+                            </View>
                             <Text style={[styles.pickBtnText, files.length > 0 && styles.pickBtnTextFilled]}>
                                 {files.length > 0
                                     ? files.length === 1 ? files[0].name : `تم إرفاق ${files.length} مستندات`
-                                    : 'اضغط هنا لاختيار الملف من جهازك'}
+                                    : 'اضغط لاختيار الملف'}
                             </Text>
-                            {files.length === 0 && (
-                                <Text style={styles.pickBtnSub}>يدعم الحجم حتى 20MB</Text>
-                            )}
+                            <Text style={styles.pickBtnSub}>
+                                {files.length > 0 ? 'جاهز للمعالجة' : 'يدعم الحجم حتى 20MB'}
+                            </Text>
                         </TouchableOpacity>
 
-                        {/* Clear Files Button */}
                         {files.length > 0 && (
-                            <TouchableOpacity style={styles.clearFilesBtn} onPress={reset}>
-                                <Text style={styles.clearFilesText}>تغيير الملف</Text>
+                            <TouchableOpacity style={styles.changeBtn} onPress={reset}>
+                                <Text style={styles.changeBtnText}>تغيير الملف</Text>
                             </TouchableOpacity>
                         )}
                     </View>
                 )}
 
-                {/* Options Form */}
                 {!done && toolOpts.length > 0 && (
                     <View style={styles.section}>
                         <Text style={styles.sectionLabel}>إعدادات المعالجة</Text>
@@ -389,51 +386,48 @@ export default function ToolScreen() {
                                 <TextInput
                                     style={[styles.input, opt.multiline && styles.textarea]}
                                     placeholder={opt.placeholder}
-                                    placeholderTextColor={theme.colors.textMuted}
+                                    placeholderTextColor={theme.colors.textPlaceholder}
                                     value={options[opt.key] ?? ''}
                                     onChangeText={(v) => setOptions((p) => ({ ...p, [opt.key]: v }))}
                                     multiline={opt.multiline}
                                     numberOfLines={opt.multiline ? 4 : 1}
                                     textAlignVertical={opt.multiline ? 'top' : 'center'}
-                                    textAlign={I18nManager.isRTL ? 'right' : 'left'}
+                                    textAlign={RTL_ALIGN}
                                 />
                             </View>
                         ))}
                     </View>
                 )}
 
-                {/* Execute Button */}
                 {!done ? (
                     <TouchableOpacity
                         style={[styles.execBtn, loading && styles.execBtnDisabled]}
                         onPress={execute}
-                        activeOpacity={0.85}
+                        activeOpacity={0.9}
                         disabled={loading}
                     >
                         {loading ? (
                             <>
                                 <ActivityIndicator color="#fff" size="small" />
-                                <Text style={styles.execBtnText}>جاري المعالجة الآمنة...</Text>
+                                <Text style={styles.execBtnText}>جاري المعالجة...</Text>
                             </>
                         ) : (
                             <>
-                                <MaterialCommunityIcons name="lightning-bolt" size={22} color="#fff" />
+                                <MaterialCommunityIcons name="arrow-right-circle" size={20} color="#fff" />
                                 <Text style={styles.execBtnText}>بدء المعالجة</Text>
                             </>
                         )}
                     </TouchableOpacity>
                 ) : (
-                    /* Success Result Card */
                     <View style={styles.resultCard}>
                         <View style={styles.successHeader}>
                             <View style={styles.successIconBox}>
-                                <MaterialCommunityIcons name="check-decagram" size={32} color={theme.colors.success} />
+                                <MaterialCommunityIcons name="check" size={28} color={theme.colors.white} />
                             </View>
-                            <Text style={styles.successTitle}>تم إنجاز المهمة بنجاح</Text>
-                            <Text style={styles.successSub}>تمت المعالجة وحذف الملفات الأصلية من خوادمنا.</Text>
+                            <Text style={styles.successTitle}>تمت المعالجة بنجاح</Text>
+                            <Text style={styles.successSub}>تم حذف الملف الأصلي من خوادمنا.</Text>
                         </View>
 
-                        {/* Text Result Container */}
                         {textResult && (
                             <View style={styles.textResultContainer}>
                                 <ScrollView style={styles.textResultBox} nestedScrollEnabled showsVerticalScrollIndicator={false}>
@@ -442,279 +436,379 @@ export default function ToolScreen() {
                             </View>
                         )}
 
-                        {/* File Result Actions */}
                         {resultUri && (
-                            <TouchableOpacity style={styles.shareBtn} onPress={share} activeOpacity={0.85}>
-                                <MaterialCommunityIcons name="export-variant" size={20} color="#fff" />
-                                <Text style={styles.shareBtnText}>حفظ / مشاركة المستند</Text>
+                            <TouchableOpacity style={styles.shareBtn} onPress={share} activeOpacity={0.9}>
+                                <MaterialCommunityIcons name="share-variant" size={18} color="#fff" />
+                                <Text style={styles.shareBtnText}>حفظ / مشاركة</Text>
                             </TouchableOpacity>
                         )}
 
-                        {/* Reset Action */}
                         <TouchableOpacity style={styles.resetBtn} onPress={reset} activeOpacity={0.8}>
-                            <MaterialCommunityIcons name="refresh" size={18} color={theme.colors.primaryDark} />
-                            <Text style={styles.resetBtnText}>إجراء عملية جديدة</Text>
+                            <MaterialCommunityIcons name="refresh" size={16} color={theme.colors.text} />
+                            <Text style={styles.resetBtnText}>عملية جديدة</Text>
                         </TouchableOpacity>
                     </View>
                 )}
 
-                {/* Support Banner */}
                 <TouchableOpacity
                     style={styles.supportBanner}
                     onPress={() => router.push({ pathname: '/support', params: { tool: tool.name } })}
-                    activeOpacity={0.8}
+                    activeOpacity={0.7}
                 >
-                    <MaterialCommunityIcons name="lifebuoy" size={20} color={theme.colors.textMuted} />
-                    <Text style={styles.supportBannerText}>هل تواجه مشكلة مع هذه الأداة؟ فريقنا جاهز للمساعدة.</Text>
+                    <Ionicons name="help-circle-outline" size={18} color={theme.colors.textMuted} />
+                    <Text style={styles.supportBannerText}>تواجه مشكلة؟ تواصل مع فريق الدعم</Text>
                 </TouchableOpacity>
-
             </View>
         </ScrollView>
     );
 }
 
-// ─── Styles ──────────────────────────────────────────────
 const wvStyles = StyleSheet.create({
     header: {
-        backgroundColor: theme.colors.brandDeep,
-        paddingHorizontal: 20,
-        paddingBottom: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(31,167,162,0.22)',
-        flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        borderBottomColor: theme.colors.borderLight,
+        borderBottomWidth: 1,
+        flexDirection: 'row',
+        gap: 8,
         justifyContent: 'space-between',
+        paddingBottom: 12,
+        paddingHorizontal: 16,
     },
     backBtn: {
-        width: 44, height: 44,
-        borderRadius: theme.radius.md,
-        backgroundColor: 'rgba(255,255,255,0.10)',
-        alignItems: 'center', justifyContent: 'center',
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
+        alignItems: 'center',
+        backgroundColor: theme.colors.background,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.full,
+        borderWidth: 1,
+        height: 38,
+        justifyContent: 'center',
+        width: 38,
     },
     title: {
+        color: theme.colors.text,
         flex: 1,
-        fontSize: 18,
-        color: theme.colors.white,
         fontFamily: theme.fonts.black,
+        fontSize: 16,
         textAlign: 'center',
-        paddingHorizontal: 10,
     },
     loadingBar: {
-        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        gap: 10,
-        paddingVertical: 12,
         backgroundColor: theme.colors.primarySoft,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.primaryLight,
+        flexDirection: 'row',
+        gap: 8,
+        justifyContent: 'center',
+        paddingVertical: 10,
     },
     loadingText: {
-        fontSize: 13,
         color: theme.colors.primary,
         fontFamily: theme.fonts.bold,
+        fontSize: 12,
     },
 });
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.background },
-    content:   { paddingBottom: 60 },
+    container: { backgroundColor: theme.colors.background, flex: 1 },
+    content: { paddingBottom: 40 },
 
     center: {
-        flex: 1, alignItems: 'center', justifyContent: 'center',
-        gap: 16, backgroundColor: theme.colors.background,
+        alignItems: 'center',
+        backgroundColor: theme.colors.background,
+        flex: 1,
+        gap: 14,
+        justifyContent: 'center',
         paddingHorizontal: 32,
     },
-    notFoundText: { fontSize: 18, color: theme.colors.text, fontFamily: theme.fonts.black, textAlign: 'center' },
-    backLink:     { marginTop: 8, paddingVertical: 12, paddingHorizontal: 24, backgroundColor: theme.colors.surface, borderRadius: theme.radius.full, borderWidth: 1, borderColor: theme.colors.border },
-    backLinkText: { fontSize: 15, color: theme.colors.primary, fontFamily: theme.fonts.bold },
+    notFoundIcon: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.full,
+        borderWidth: 1,
+        height: 64,
+        justifyContent: 'center',
+        width: 64,
+    },
+    notFoundText: { color: theme.colors.text, fontFamily: theme.fonts.black, fontSize: 16, textAlign: 'center' },
+    backLink: {
+        backgroundColor: theme.colors.primarySoft,
+        borderRadius: theme.radius.full,
+        marginTop: 4,
+        paddingHorizontal: 22,
+        paddingVertical: 10,
+    },
+    backLinkText: { color: theme.colors.primary, fontFamily: theme.fonts.bold, fontSize: 14 },
 
     /* --- Header --- */
     header: {
-        backgroundColor: theme.colors.brandDeep,
-        borderColor: 'rgba(255,255,255,0.10)',
-        borderWidth: 1,
-        paddingBottom: 28,
+        backgroundColor: theme.colors.background,
+        paddingBottom: 12,
         paddingHorizontal: 20,
-        marginHorizontal: 14,
-        marginTop: 8,
-        borderRadius: 26,
-        gap: 20,
-        overflow: 'hidden',
-        ...theme.shadow.lg,
     },
-    headerAccent: {
-        position: 'absolute',
-        top: 0,
-        left: 20,
-        right: 20,
-        height: 3,
-        backgroundColor: theme.colors.primary,
+    headerRow: {
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
     },
     backBtn: {
-        width: 44, height: 44,
-        borderRadius: theme.radius.md,
-        backgroundColor: 'rgba(255,255,255,0.10)',
-        alignItems: 'center', justifyContent: 'center',
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.16)',
-        alignSelf: 'flex-start',
-    },
-    headerMain: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-    toolIconBox: {
-        width: 64, height: 64,
-        borderRadius: 18,
-        backgroundColor: theme.colors.brandInk,
-        alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
+        alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.full,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.14)',
+        height: 38,
+        justifyContent: 'center',
+        width: 38,
     },
-    headerText:  { flex: 1, alignItems: 'flex-start' },
-    toolName:    { fontSize: 22, color: theme.colors.white, fontFamily: theme.fonts.black, textAlign: I18nManager.isRTL ? 'right' : 'left', marginBottom: 4 },
-    toolDesc:    { fontSize: 14, color: 'rgba(239,255,253,0.76)', fontFamily: theme.fonts.medium, textAlign: I18nManager.isRTL ? 'right' : 'left', lineHeight: 22 },
+    headerCenter: {
+        alignItems: 'center',
+    },
+    toolIconBox: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.primarySoft,
+        borderColor: theme.colors.borderBrand,
+        borderRadius: theme.radius.md,
+        borderWidth: 1,
+        height: 44,
+        justifyContent: 'center',
+        width: 44,
+    },
+    headerCopy: {
+        marginTop: 16,
+    },
+    toolName: {
+        color: theme.colors.text,
+        fontFamily: theme.fonts.black,
+        fontSize: 22,
+        textAlign: RTL_ALIGN,
+    },
+    toolDesc: {
+        color: theme.colors.textMuted,
+        fontFamily: theme.fonts.medium,
+        fontSize: 13,
+        lineHeight: 20,
+        marginTop: 4,
+        textAlign: RTL_ALIGN,
+    },
 
-    body: { padding: 20, gap: 8 },
+    body: { paddingHorizontal: 20, paddingTop: 8 },
 
     /* --- Sections --- */
     section: {
-        marginBottom: 24,
         backgroundColor: theme.colors.surface,
         borderColor: theme.colors.borderLight,
-        borderRadius: theme.radius.xl,
+        borderRadius: theme.radius.lg,
         borderWidth: 1,
+        marginBottom: 14,
         padding: 16,
-        ...theme.shadow.sm,
     },
-    sectionLabel: { fontSize: 15, color: theme.colors.text, fontFamily: theme.fonts.black, textAlign: I18nManager.isRTL ? 'right' : 'left', marginBottom: 12 },
+    sectionLabel: {
+        color: theme.colors.text,
+        fontFamily: theme.fonts.black,
+        fontSize: 14,
+        marginBottom: 14,
+        textAlign: RTL_ALIGN,
+    },
 
-    /* --- File Dropzone --- */
+    /* --- File picker --- */
     pickBtn: {
+        alignItems: 'center',
         backgroundColor: theme.colors.background,
-        borderRadius: 22,
-        borderWidth: 1.5, borderColor: theme.colors.borderBrand,
+        borderColor: theme.colors.borderBrand,
+        borderRadius: theme.radius.md,
         borderStyle: 'dashed',
-        paddingVertical: 34, paddingHorizontal: 20,
-        flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        minHeight: 168,
-        ...theme.shadow.sm,
-    },
-    pickBtnFilled: {
-        borderStyle: 'solid',
-        borderColor: theme.colors.primary,
-        backgroundColor: theme.colors.primarySoft,
+        borderWidth: 1.5,
+        gap: 10,
+        justifyContent: 'center',
+        minHeight: 140,
+        paddingHorizontal: 16,
         paddingVertical: 24,
     },
+    pickBtnFilled: {
+        backgroundColor: theme.colors.primarySoft,
+        borderColor: theme.colors.primary,
+        borderStyle: 'solid',
+    },
+    pickIcon: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.surface,
+        borderRadius: theme.radius.full,
+        height: 48,
+        justifyContent: 'center',
+        width: 48,
+    },
+    pickIconFilled: {
+        backgroundColor: theme.colors.surface,
+    },
     pickBtnText: {
-        fontSize: 15, color: theme.colors.textSecondary,
-        fontFamily: theme.fonts.bold, textAlign: 'center',
+        color: theme.colors.text,
+        fontFamily: theme.fonts.bold,
+        fontSize: 14,
+        textAlign: 'center',
     },
-    pickBtnTextFilled: { color: theme.colors.primaryDark, fontSize: 16 },
+    pickBtnTextFilled: {
+        color: theme.colors.primary,
+    },
     pickBtnSub: {
-        fontSize: 12, color: theme.colors.textMuted,
-        fontFamily: theme.fonts.regular, marginTop: 6,
+        color: theme.colors.textMuted,
+        fontFamily: theme.fonts.medium,
+        fontSize: 11,
     },
-    clearFilesBtn: {
+    changeBtn: {
         alignSelf: 'center',
         marginTop: 12,
-        paddingVertical: 8,
-        paddingHorizontal: 16,
+        paddingHorizontal: 14,
+        paddingVertical: 6,
     },
-    clearFilesText: {
+    changeBtnText: {
         color: theme.colors.danger,
-        fontSize: 13,
         fontFamily: theme.fonts.bold,
+        fontSize: 12,
     },
 
-    /* --- Form Options --- */
-    optionWrap:  { marginBottom: 16 },
-    optionLabel: { fontSize: 14, color: theme.colors.textSecondary, fontFamily: theme.fonts.bold, textAlign: I18nManager.isRTL ? 'right' : 'left', marginBottom: 8 },
+    /* --- Form options --- */
+    optionWrap: { marginBottom: 14 },
+    optionLabel: {
+        color: theme.colors.textSecondary,
+        fontFamily: theme.fonts.bold,
+        fontSize: 13,
+        marginBottom: 6,
+        textAlign: RTL_ALIGN,
+    },
     input: {
         backgroundColor: theme.colors.background,
+        borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.md,
-        borderWidth: 1, borderColor: theme.colors.borderLight,
-        paddingHorizontal: 16, paddingVertical: 14,
-        fontSize: 15, color: theme.colors.text,
+        borderWidth: 1,
+        color: theme.colors.text,
         fontFamily: theme.fonts.regular,
+        fontSize: 14,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
     },
-    textarea: { height: 130, paddingTop: 16 },
+    textarea: { height: 120, paddingTop: 14 },
 
-    /* --- Actions --- */
+    /* --- Execute --- */
     execBtn: {
+        alignItems: 'center',
         backgroundColor: theme.colors.primary,
-        borderRadius: 18,
-        paddingVertical: 18,
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-        marginTop: 10,
+        borderRadius: theme.radius.md,
+        flexDirection: 'row',
+        gap: 8,
+        justifyContent: 'center',
+        marginTop: 6,
+        paddingVertical: 16,
         ...theme.shadow.sm,
     },
-    execBtnDisabled: { opacity: 0.7 },
-    execBtnText: { color: '#fff', fontSize: 16, fontFamily: theme.fonts.black },
+    execBtnDisabled: { opacity: 0.65 },
+    execBtnText: {
+        color: theme.colors.white,
+        fontFamily: theme.fonts.black,
+        fontSize: 15,
+    },
 
-    /* --- Success Result Card --- */
+    /* --- Result --- */
     resultCard: {
         backgroundColor: theme.colors.surface,
-        borderRadius: theme.radius.xl,
-        borderWidth: 1, borderColor: theme.colors.borderLight,
-        padding: 24, marginTop: 10, gap: 20,
-        ...theme.shadow.md,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.lg,
+        borderWidth: 1,
+        gap: 14,
+        marginTop: 6,
+        padding: 18,
     },
     successHeader: {
         alignItems: 'center',
+        borderBottomColor: theme.colors.borderLight,
         borderBottomWidth: 1,
-        borderBottomColor: theme.colors.border,
-        paddingBottom: 20,
+        paddingBottom: 14,
     },
     successIconBox: {
-        width: 64, height: 64,
-        borderRadius: 32,
-        backgroundColor: theme.colors.successBg,
-        alignItems: 'center', justifyContent: 'center',
-        marginBottom: 12,
+        alignItems: 'center',
+        backgroundColor: theme.colors.success,
+        borderRadius: theme.radius.full,
+        height: 52,
+        justifyContent: 'center',
+        marginBottom: 10,
+        width: 52,
     },
-    successTitle: { fontSize: 18, color: theme.colors.text, fontFamily: theme.fonts.black, textAlign: 'center', marginBottom: 6 },
-    successSub: { fontSize: 13, color: theme.colors.textMuted, fontFamily: theme.fonts.regular, textAlign: 'center', lineHeight: 20 },
+    successTitle: {
+        color: theme.colors.text,
+        fontFamily: theme.fonts.black,
+        fontSize: 16,
+        marginBottom: 4,
+        textAlign: 'center',
+    },
+    successSub: {
+        color: theme.colors.textMuted,
+        fontFamily: theme.fonts.medium,
+        fontSize: 12,
+        textAlign: 'center',
+    },
 
     textResultContainer: {
         backgroundColor: theme.colors.background,
+        borderColor: theme.colors.borderLight,
         borderRadius: theme.radius.md,
-        borderWidth: 1, borderColor: theme.colors.border,
-        padding: 4,
+        borderWidth: 1,
     },
     textResultBox: {
-        padding: 16, maxHeight: 250,
+        maxHeight: 240,
+        padding: 14,
     },
     textResultContent: {
-        fontSize: 15, color: theme.colors.text,
-        fontFamily: theme.fonts.regular, textAlign: I18nManager.isRTL ? 'right' : 'left', lineHeight: 26,
+        color: theme.colors.text,
+        fontFamily: theme.fonts.regular,
+        fontSize: 14,
+        lineHeight: 24,
+        textAlign: RTL_ALIGN,
     },
 
     shareBtn: {
+        alignItems: 'center',
         backgroundColor: theme.colors.primary,
-        borderRadius: theme.radius.md, paddingVertical: 16,
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-        ...theme.shadow.sm,
+        borderRadius: theme.radius.md,
+        flexDirection: 'row',
+        gap: 8,
+        justifyContent: 'center',
+        paddingVertical: 14,
     },
-    shareBtnText: { color: '#fff', fontSize: 16, fontFamily: theme.fonts.bold },
+    shareBtnText: {
+        color: theme.colors.white,
+        fontFamily: theme.fonts.black,
+        fontSize: 14,
+    },
 
     resetBtn: {
-        flexDirection: 'row', alignItems: 'center',
-        justifyContent: 'center', gap: 8,
-        paddingVertical: 12,
+        alignItems: 'center',
         backgroundColor: theme.colors.surfaceAlt,
         borderRadius: theme.radius.md,
-        borderWidth: 1, borderColor: theme.colors.border,
+        flexDirection: 'row',
+        gap: 6,
+        justifyContent: 'center',
+        paddingVertical: 12,
     },
-    resetBtnText: { fontSize: 14, color: theme.colors.primaryDark, fontFamily: theme.fonts.bold },
+    resetBtnText: {
+        color: theme.colors.text,
+        fontFamily: theme.fonts.bold,
+        fontSize: 13,
+    },
 
-    /* --- Support Banner --- */
     supportBanner: {
-        flexDirection: 'row', alignItems: 'center',
-        justifyContent: 'center', gap: 8, marginTop: 32,
+        alignItems: 'center',
         backgroundColor: theme.colors.surface,
-        paddingVertical: 16, paddingHorizontal: 16,
-        borderRadius: theme.radius.lg,
-        borderWidth: 1, borderColor: theme.colors.borderLight,
+        borderColor: theme.colors.borderLight,
+        borderRadius: theme.radius.md,
+        borderWidth: 1,
+        flexDirection: 'row',
+        gap: 8,
+        justifyContent: 'center',
+        marginTop: 16,
+        paddingVertical: 12,
     },
-    supportBannerText: { flex: 1, fontSize: 13, color: theme.colors.textSecondary, fontFamily: theme.fonts.regular, textAlign: I18nManager.isRTL ? 'right' : 'left' },
+    supportBannerText: {
+        color: theme.colors.textSecondary,
+        fontFamily: theme.fonts.medium,
+        fontSize: 12,
+    },
 });
